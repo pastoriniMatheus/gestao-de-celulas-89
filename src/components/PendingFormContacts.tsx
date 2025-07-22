@@ -20,7 +20,7 @@ export const PendingFormContacts = () => {
   );
 
   const handleAssignToCell = async (contactId: string, cellId: string) => {
-    if (!cellId || cellId === 'none') return;
+    if (!cellId || cellId === 'no-cell') return;
 
     setUpdating(contactId);
     try {
@@ -32,7 +32,7 @@ export const PendingFormContacts = () => {
         status: 'member' as const // Garantir que o status seja alterado para member
       };
 
-      console.log('P endingFormContacts: Dados de atualização:', updateData);
+      console.log('PendingFormContacts: Dados de atualização:', updateData);
       
       await updateContact(contactId, updateData);
 
@@ -160,7 +160,7 @@ export const PendingFormContacts = () => {
                               <SelectValue placeholder="Selecione uma célula" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Nenhuma</SelectItem>
+                              <SelectItem value="no-cell">Nenhuma</SelectItem>
                               {activeCells.map((cell) => (
                                 <SelectItem key={cell.id} value={cell.id}>
                                   <div className="flex flex-col">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +54,7 @@ export const MessagingCenter = () => {
   const [selectedCell, setSelectedCell] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedWebhook, setSelectedWebhook] = useState<string>('');
+  const [selectedWebhook, setSelectedWebhook] = useState<string>('default');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [sending, setSending] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
@@ -119,7 +118,7 @@ export const MessagingCenter = () => {
     setSending(true);
     try {
       // Enviar via webhook se selecionado
-      if (selectedWebhook) {
+      if (selectedWebhook !== 'default') {
         const webhook = webhooks.find(w => w.id === selectedWebhook);
         if (!webhook) {
           throw new Error('Webhook não encontrado');
@@ -288,13 +287,16 @@ export const MessagingCenter = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Template</label>
                 <Select onValueChange={(value) => {
-                  const template = templates.find(t => t.id === value);
-                  if (template) handleLoadTemplate(template);
+                  if (value !== 'none') {
+                    const template = templates.find(t => t.id === value);
+                    if (template) handleLoadTemplate(template);
+                  }
                 }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um template" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Nenhum template</SelectItem>
                     {activeTemplates.map(template => (
                       <SelectItem key={template.id} value={template.id}>
                         {template.name}
@@ -314,7 +316,7 @@ export const MessagingCenter = () => {
                     <SelectValue placeholder="WhatsApp Direto (padrão)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">WhatsApp Direto (padrão)</SelectItem>
+                    <SelectItem value="default">WhatsApp Direto (padrão)</SelectItem>
                     {messageWebhooks.map(webhook => (
                       <SelectItem key={webhook.id} value={webhook.id}>
                         Webhook: {webhook.name}
