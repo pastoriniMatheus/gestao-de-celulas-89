@@ -11,7 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const BirthdayNotifications = () => {
   const {
-    todayBirthdays,
+    todayBirthdays = [], // Default to empty array
     loading,
     markNotificationSent
   } = useBirthdayNotifications();
@@ -43,6 +43,9 @@ export const BirthdayNotifications = () => {
 
   if (loading) return null;
 
+  // Ensure todayBirthdays is an array before using it
+  const birthdays = Array.isArray(todayBirthdays) ? todayBirthdays : [];
+
   return (
     <div className="relative">
       <Button
@@ -53,9 +56,9 @@ export const BirthdayNotifications = () => {
         title="Notificações de Aniversário"
       >
         <Bell className="h-4 w-4" />
-        {todayBirthdays.length > 0 && (
+        {birthdays.length > 0 && (
           <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 flex items-center justify-center">
-            {todayBirthdays.length}
+            {birthdays.length}
           </Badge>
         )}
       </Button>
@@ -69,9 +72,9 @@ export const BirthdayNotifications = () => {
                 <span className="truncate">Notificações de Aniversário</span>
               </CardTitle>
               <CardDescription className="text-xs">
-                {todayBirthdays.length === 0 
+                {birthdays.length === 0 
                   ? "Nenhuma notificação pendente" 
-                  : `${todayBirthdays.length} notificação(ões) pendente(s)`
+                  : `${birthdays.length} notificação(ões) pendente(s)`
                 }
               </CardDescription>
             </div>
@@ -82,9 +85,9 @@ export const BirthdayNotifications = () => {
           <CardContent className="p-0">
             <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)] max-h-[300px]' : 'h-[400px]'}`}>
               <div className="space-y-2 p-4">
-                {todayBirthdays.length > 0 ? (
+                {birthdays.length > 0 ? (
                   <div className="space-y-3">
-                    {todayBirthdays.map(birthday => (
+                    {birthdays.map(birthday => (
                       <div 
                         key={birthday.contact_id} 
                         className="flex items-center justify-between p-3 rounded-md border bg-red-50 border-red-100 min-h-[80px]"
