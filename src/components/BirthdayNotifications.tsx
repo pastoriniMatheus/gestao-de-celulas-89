@@ -12,6 +12,15 @@ import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 export const BirthdayNotifications = () => {
   const { todayBirthdays, loading: birthdayLoading, markNotificationSent } = useBirthdayNotifications();
@@ -90,126 +99,177 @@ export const BirthdayNotifications = () => {
 
   if (loading) return null;
 
+  // Conteúdo das notificações
+  const NotificationContent = () => (
+    <div className="space-y-4 p-4">
+      {/* Seção de Aniversariantes */}
+      {todayBirthdays.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Gift className="h-4 w-4 text-orange-500 flex-shrink-0" />
+            <span className="text-sm font-medium">Aniversariantes ({todayBirthdays.length})</span>
+          </div>
+          <div className="space-y-2">
+            {todayBirthdays.map((contact) => (
+              <div key={contact.contact_id} className="flex items-center justify-between p-3 bg-orange-50 rounded-md border border-orange-100 min-h-[80px]">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="text-sm font-medium text-gray-900 truncate">{contact.contact_name}</p>
+                  <p className="text-xs text-orange-600 font-medium">
+                    {formatBirthDate(contact.birth_date)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {contact.age !== null && contact.age !== undefined ? `${contact.age} anos` : 'Idade não calculada'}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleSendMessage(contact.contact_id, contact.contact_name, contact.whatsapp)}
+                  className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
+                >
+                  <Phone className="h-3 w-3 mr-1" />
+                  {isMobile ? 'WhatsApp' : 'Enviar'}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Separador se ambas as seções têm conteúdo */}
+      {todayBirthdays.length > 0 && newContacts.length > 0 && (
+        <Separator />
+      )}
+
+      {/* Seção de Novos Contatos */}
+      {newContacts.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <UserPlus className="h-4 w-4 text-blue-500 flex-shrink-0" />
+            <span className="text-sm font-medium">Novos Contatos ({newContacts.length})</span>
+          </div>
+          <div className="space-y-2">
+            {newContacts.map((contact) => (
+              <div key={contact.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-md border border-blue-100 min-h-[80px]">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="text-sm font-medium text-gray-900 truncate">{contact.name}</p>
+                  <p className="text-xs text-blue-600 font-medium">
+                    Cadastrado às {formatContactTime(contact.created_at)}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {contact.whatsapp ? `WhatsApp: ${contact.whatsapp}` : 'WhatsApp não informado'}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleWelcomeMessage(contact.name, contact.whatsapp)}
+                  className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
+                  disabled={!contact.whatsapp}
+                >
+                  <Phone className="h-3 w-3 mr-1" />
+                  Saudar
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mensagem quando não há notificações */}
+      {totalNotifications === 0 && (
+        <p className="text-center text-muted-foreground py-4 text-sm">
+          🔔 Nenhuma notificação hoje
+        </p>
+      )}
+    </div>
+  );
+
+  // Renderização condicional baseada no tipo de dispositivo
   return (
     <div className="relative">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative h-9 w-9"
-      >
-        <Bell className="h-4 w-4" />
-        {totalNotifications > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 flex items-center justify-center">
-            {totalNotifications}
-          </Badge>
-        )}
-      </Button>
-
-      {isOpen && (
-        <Card className={`absolute ${isMobile ? 'right-2 left-2 top-12 max-w-[calc(100vw-1rem)]' : 'right-0 top-12 w-80'} z-50 shadow-lg border bg-white`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Bell className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span className="truncate">Notificações</span>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                {totalNotifications === 0 
-                  ? "Nenhuma notificação hoje" 
-                  : `${totalNotifications} notificação(ões) hoje`
-                }
-              </CardDescription>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-6 w-6 flex-shrink-0">
-              <X className="h-3 w-3" />
+      {isMobile ? (
+        <Drawer open={isOpen} onOpenChange={setIsOpen}>
+          <DrawerTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9"
+            >
+              <Bell className="h-4 w-4" />
+              {totalNotifications > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 flex items-center justify-center">
+                  {totalNotifications}
+                </Badge>
+              )}
             </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)] max-h-[350px]' : 'h-[400px]'}`}>
-              <div className="space-y-4 p-4">
-                {/* Seção de Aniversariantes */}
-                {todayBirthdays.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Gift className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                      <span className="text-sm font-medium">Aniversariantes ({todayBirthdays.length})</span>
-                    </div>
-                    <div className="space-y-2">
-                      {todayBirthdays.map((contact) => (
-                        <div key={contact.contact_id} className="flex items-center justify-between p-3 bg-orange-50 rounded-md border border-orange-100 min-h-[80px]">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <p className="text-sm font-medium text-gray-900 truncate">{contact.contact_name}</p>
-                            <p className="text-xs text-orange-600 font-medium">
-                              {formatBirthDate(contact.birth_date)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {contact.age !== null && contact.age !== undefined ? `${contact.age} anos` : 'Idade não calculada'}
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleSendMessage(contact.contact_id, contact.contact_name, contact.whatsapp)}
-                            className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
-                          >
-                            <Phone className="h-3 w-3 mr-1" />
-                            {isMobile ? 'WhatsApp' : 'Enviar'}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Separador se ambas as seções têm conteúdo */}
-                {todayBirthdays.length > 0 && newContacts.length > 0 && (
-                  <Separator />
-                )}
-
-                {/* Seção de Novos Contatos */}
-                {newContacts.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <UserPlus className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                      <span className="text-sm font-medium">Novos Contatos ({newContacts.length})</span>
-                    </div>
-                    <div className="space-y-2">
-                      {newContacts.map((contact) => (
-                        <div key={contact.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-md border border-blue-100 min-h-[80px]">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <p className="text-sm font-medium text-gray-900 truncate">{contact.name}</p>
-                            <p className="text-xs text-blue-600 font-medium">
-                              Cadastrado às {formatContactTime(contact.created_at)}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {contact.whatsapp ? `WhatsApp: ${contact.whatsapp}` : 'WhatsApp não informado'}
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleWelcomeMessage(contact.name, contact.whatsapp)}
-                            className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
-                            disabled={!contact.whatsapp}
-                          >
-                            <Phone className="h-3 w-3 mr-1" />
-                            {isMobile ? 'Saudar' : 'Saudar'}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Mensagem quando não há notificações */}
-                {totalNotifications === 0 && (
-                  <p className="text-center text-muted-foreground py-4 text-sm">
-                    🔔 Nenhuma notificação hoje
-                  </p>
-                )}
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader className="flex items-center justify-between">
+              <div>
+                <DrawerTitle className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-blue-500" />
+                  Notificações
+                </DrawerTitle>
+                <DrawerDescription>
+                  {totalNotifications === 0 
+                    ? "Nenhuma notificação hoje" 
+                    : `${totalNotifications} notificação(ões) hoje`
+                  }
+                </DrawerDescription>
               </div>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <X className="h-3 w-3" />
+                </Button>
+              </DrawerClose>
+            </DrawerHeader>
+            <ScrollArea className="h-[60vh] max-h-[500px]">
+              <NotificationContent />
             </ScrollArea>
-          </CardContent>
-        </Card>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen(!isOpen)}
+            className="relative h-9 w-9"
+          >
+            <Bell className="h-4 w-4" />
+            {totalNotifications > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 flex items-center justify-center">
+                {totalNotifications}
+              </Badge>
+            )}
+          </Button>
+
+          {isOpen && (
+            <Card className="absolute right-0 top-12 w-80 z-50 shadow-lg border bg-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <span className="truncate">Notificações</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {totalNotifications === 0 
+                      ? "Nenhuma notificação hoje" 
+                      : `${totalNotifications} notificação(ões) hoje`
+                    }
+                  </CardDescription>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-6 w-6 flex-shrink-0">
+                  <X className="h-3 w-3" />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[400px]">
+                  <NotificationContent />
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
