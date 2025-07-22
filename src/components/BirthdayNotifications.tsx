@@ -11,33 +11,33 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const BirthdayNotifications = () => {
   const {
-    notifications,
+    todayBirthdays,
     loading,
-    markAsSent
+    markNotificationSent
   } = useBirthdayNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleSendMessage = (notification: any) => {
-    if (!notification.contact?.whatsapp) {
+  const handleSendMessage = (birthday: any) => {
+    if (!birthday.whatsapp) {
       toast({
         title: "WhatsApp não cadastrado",
-        description: `${notification.contact?.name} não possui WhatsApp cadastrado`,
+        description: `${birthday.contact_name} não possui WhatsApp cadastrado`,
         variant: "destructive"
       });
       return;
     }
 
-    const message = `🎉 Feliz Aniversário, ${notification.contact.name}! 🎂\n\nQue Deus abençoe sua vida com muita saúde, paz e alegria. Desejamos um ano repleto de conquistas e vitórias!\n\nCom carinho,\nEquipe de Células`;
-    const whatsappUrl = `https://wa.me/55${notification.contact.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    const message = `🎉 Feliz Aniversário, ${birthday.contact_name}! 🎂\n\nQue Deus abençoe sua vida com muita saúde, paz e alegria. Desejamos um ano repleto de conquistas e vitórias!\n\nCom carinho,\nEquipe de Células`;
+    const whatsappUrl = `https://wa.me/55${birthday.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     
     window.open(whatsappUrl, '_blank');
     
-    markAsSent(notification.id);
+    markNotificationSent(birthday.contact_id);
     
     toast({
       title: "Mensagem enviada",
-      description: `Mensagem de aniversário enviada para ${notification.contact.name}`
+      description: `Mensagem de aniversário enviada para ${birthday.contact_name}`
     });
   };
 
@@ -53,9 +53,9 @@ export const BirthdayNotifications = () => {
         title="Notificações de Aniversário"
       >
         <Bell className="h-4 w-4" />
-        {notifications.length > 0 && (
+        {todayBirthdays.length > 0 && (
           <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 flex items-center justify-center">
-            {notifications.length}
+            {todayBirthdays.length}
           </Badge>
         )}
       </Button>
@@ -69,9 +69,9 @@ export const BirthdayNotifications = () => {
                 <span className="truncate">Notificações de Aniversário</span>
               </CardTitle>
               <CardDescription className="text-xs">
-                {notifications.length === 0 
+                {todayBirthdays.length === 0 
                   ? "Nenhuma notificação pendente" 
-                  : `${notifications.length} notificação(ões) pendente(s)`
+                  : `${todayBirthdays.length} notificação(ões) pendente(s)`
                 }
               </CardDescription>
             </div>
@@ -82,37 +82,37 @@ export const BirthdayNotifications = () => {
           <CardContent className="p-0">
             <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)] max-h-[300px]' : 'h-[400px]'}`}>
               <div className="space-y-2 p-4">
-                {notifications.length > 0 ? (
+                {todayBirthdays.length > 0 ? (
                   <div className="space-y-3">
-                    {notifications.map(notification => (
+                    {todayBirthdays.map(birthday => (
                       <div 
-                        key={notification.id} 
+                        key={birthday.contact_id} 
                         className="flex items-center justify-between p-3 rounded-md border bg-red-50 border-red-100 min-h-[80px]"
                       >
                         <div className="flex-1 min-w-0 pr-3">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-sm font-medium text-gray-900 truncate">
-                              {notification.contact?.name || 'Nome não encontrado'}
+                              {birthday.contact_name || 'Nome não encontrado'}
                             </p>
                             <Badge className="bg-red-500 text-white text-xs flex-shrink-0">
                               HOJE!
                             </Badge>
                           </div>
                           <p className="text-xs text-red-600 font-medium">
-                            Aniversário hoje
+                            Aniversário hoje{birthday.age ? ` - ${birthday.age} anos` : ''}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {notification.contact?.whatsapp ? 
-                              `WhatsApp: ${notification.contact.whatsapp}` : 
+                            {birthday.whatsapp ? 
+                              `WhatsApp: ${birthday.whatsapp}` : 
                               'WhatsApp não cadastrado'
                             }
                           </p>
                         </div>
                         <Button
                           size="sm"
-                          onClick={() => handleSendMessage(notification)}
+                          onClick={() => handleSendMessage(birthday)}
                           className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
-                          disabled={!notification.contact?.whatsapp}
+                          disabled={!birthday.whatsapp}
                         >
                           <Phone className="h-3 w-3 mr-1" />
                           {isMobile ? 'WhatsApp' : 'Enviar'}
