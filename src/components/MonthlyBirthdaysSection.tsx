@@ -72,7 +72,7 @@ export const MonthlyBirthdaysSection = () => {
       </Button>
 
       {isOpen && (
-        <Card className={`absolute ${isMobile ? 'right-0 left-0 mx-2 top-12 min-w-[320px]' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
+        <Card className={`absolute ${isMobile ? 'right-2 left-2 top-12 max-w-[calc(100vw-1rem)]' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -91,7 +91,7 @@ export const MonthlyBirthdaysSection = () => {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className={`${isMobile ? 'h-[300px]' : 'h-[400px]'}`}>
+            <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)] max-h-[300px]' : 'h-[400px]'}`}>
               <div className="space-y-2 p-4">
                 {monthlyBirthdays.length > 0 ? (
                   <div className="space-y-3">

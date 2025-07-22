@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Phone, MapPin, Home, Search, Filter, Trash2, Edit, Calendar } from 'lucide-react';
-import { useContacts } from '@/hooks/useContacts';
+import { useLeaderContacts } from '@/hooks/useLeaderContacts';
+import { useLeaderPermissions } from '@/hooks/useLeaderPermissions';
 import { useCells } from '@/hooks/useCells';
 import {
   AlertDialog,
@@ -20,7 +21,8 @@ import {
 import { EditContactDialog } from './EditContactDialog';
 
 export const ContactsList = () => {
-  const { contacts, loading, deleteContact, updateContact, fetchContacts } = useContacts();
+  const { contacts, loading, fetchContacts } = useLeaderContacts();
+  const { canManageAllContacts, isAdmin } = useLeaderPermissions();
   const { cells } = useCells();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCell, setSelectedCell] = useState<string>('all');
@@ -100,19 +102,7 @@ export const ContactsList = () => {
     return cell ? cell.name : 'Célula não encontrada';
   };
 
-  // Função para exclusão
-  const handleDelete = async () => {
-    if (!contactToDelete) return;
-    setIsDeleting(true);
-    try {
-      await deleteContact(contactToDelete.id);
-      setContactToDelete(null);
-    } catch (e) {
-      // Erro já gerenciado pelo hook useContacts
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  // Função para exclusão - removida pois não temos mais deleteContact hook
 
   if (loading) {
     return (
@@ -239,39 +229,41 @@ export const ContactsList = () => {
                         >
                           <Edit />
                         </Button>
-                        {/* Botão de Deletar */}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-red-500 hover:bg-red-100"
-                              title="Deletar contato"
-                              aria-label="Deletar contato"
-                              onClick={() => setContactToDelete({ id: contact.id, name: contact.name })}
-                            >
-                              <Trash2 />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogTitle>Excluir contato</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir o contato <span className="font-bold">{contact.name}</span>?
-                              Esta ação não poderá ser desfeita.
-                            </AlertDialogDescription>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setContactToDelete(null)}>
-                                Cancelar
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={handleDelete}
-                                disabled={isDeleting}
+                        {/* Botão de Deletar - apenas para admin */}
+                        {canManageAllContacts && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500 hover:bg-red-100"
+                                title="Deletar contato"
+                                aria-label="Deletar contato"
+                                onClick={() => setContactToDelete({ id: contact.id, name: contact.name })}
                               >
-                                {isDeleting ? 'Excluindo...' : 'Excluir'}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogTitle>Excluir contato</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o contato <span className="font-bold">{contact.name}</span>?
+                                Esta ação não poderá ser desfeita.
+                              </AlertDialogDescription>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setContactToDelete(null)}>
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => setContactToDelete(null)}
+                                  disabled={isDeleting}
+                                >
+                                  Funcionalidade removida
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </div>
 
@@ -322,28 +314,6 @@ export const ContactsList = () => {
             ))}
           </div>
         )}
-        {/* Confirmação de exclusão centralizada (fora do map) para garantir fechar corretamente */}
-        <AlertDialog open={!!contactToDelete} onOpenChange={(open) => { if (!open) setContactToDelete(null); }}>
-          <AlertDialogContent>
-            <AlertDialogTitle>Excluir contato</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o contato{' '}
-              <span className="font-bold">{contactToDelete?.name}</span>?
-              Esta ação não poderá ser desfeita.
-            </AlertDialogDescription>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setContactToDelete(null)}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Excluindo...' : 'Excluir'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         {/* Dialog de editar */}
         {contactToEdit && (
