@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,10 +19,12 @@ import {
   CheckCircle,
   AlertCircle,
   FileText,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Trash2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMessaging } from '@/hooks/useMessaging';
@@ -45,7 +48,7 @@ export const MessagingCenter = () => {
   } = useMessaging();
   
   const { webhooks } = useWebhookConfigs();
-  const { templates, addTemplate } = useMessageTemplates();
+  const { templates, addTemplate, deleteTemplate } = useMessageTemplates();
   const { history, loading: historyLoading, saveMessageToHistory } = useMessageHistory();
   const { userProfile } = useAuth();
   
@@ -217,6 +220,23 @@ export const MessagingCenter = () => {
     }
   };
 
+  const handleDeleteTemplate = async (templateId: string) => {
+    try {
+      await deleteTemplate(templateId);
+      toast({
+        title: "Sucesso",
+        description: "Template deletado com sucesso"
+      });
+    } catch (error) {
+      console.error('Erro ao deletar template:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao deletar template",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleLoadTemplate = (template: MessageTemplate) => {
     setMessage(template.message);
     toast({
@@ -247,7 +267,7 @@ export const MessagingCenter = () => {
   }
 
   // Mensagens disponíveis para webhook
-  const messageWebhooks = webhooks.filter(w => w.active && w.event_type === 'custom');
+  const messageWebhooks = webhooks.filter(w => w.active && (w.event_type === 'custom' || w.event_type === 'bulk_message'));
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4">
@@ -562,22 +582,52 @@ export const MessagingCenter = () => {
                     activeTemplates.map(template => (
                       <div key={template.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                         <div className="flex justify-between items-start mb-2">
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-medium text-lg">{template.name}</h3>
                             <p className="text-xs text-gray-500">
                               Tipo: {template.template_type === 'custom' ? 'Personalizado' : template.template_type}
                             </p>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              setMessage(template.message);
-                              setActiveTab('message');
-                            }}
-                          >
-                            Usar
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => {
+                                setMessage(template.message);
+                                setActiveTab('message');
+                              }}
+                            >
+                              Usar
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o template "{template.name}"? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteTemplate(template.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </div>
                         <div className="bg-gray-100 p-3 rounded text-sm whitespace-pre-wrap">
                           {template.message}
