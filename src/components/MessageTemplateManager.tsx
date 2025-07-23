@@ -14,7 +14,7 @@ import { useMessageTemplates } from '@/hooks/useMessageTemplates';
 import { useToast } from '@/hooks/use-toast';
 
 export const MessageTemplateManager = () => {
-  const { templates, loading, createTemplate, updateTemplate, deleteTemplate } = useMessageTemplates();
+  const { templates, loading, addTemplate, updateTemplate, deleteTemplate } = useMessageTemplates();
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -30,7 +30,10 @@ export const MessageTemplateManager = () => {
   const handleCreateTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createTemplate(formData);
+      await addTemplate({
+        ...formData,
+        active: true
+      });
       setIsCreateDialogOpen(false);
       setFormData({ name: '', template_type: 'custom', subject: '', message: '', variables: [] });
       toast({
