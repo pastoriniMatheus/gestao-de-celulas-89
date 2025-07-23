@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -18,7 +19,9 @@ export const AddUserDialog = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user'
+    role: 'user',
+    canAccessMinistries: false,
+    canAccessKids: false
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,6 +99,22 @@ export const AddUserDialog = () => {
           });
         } else {
           console.log('Perfil criado com sucesso');
+          
+          // Criar permissões de acesso aos ministérios se necessário
+          if (formData.canAccessMinistries || formData.canAccessKids) {
+            const { error: accessError } = await supabase
+              .from('user_ministry_access')
+              .insert([{
+                user_id: authData.user.id,
+                can_access_ministries: formData.canAccessMinistries,
+                can_access_kids: formData.canAccessKids
+              }]);
+
+            if (accessError) {
+              console.error('Erro ao criar permissões de acesso:', accessError);
+            }
+          }
+          
           toast({
             title: "Sucesso",
             description: "Usuário criado com sucesso! Um email de confirmação foi enviado.",
@@ -103,7 +122,15 @@ export const AddUserDialog = () => {
         }
       }
 
-      setFormData({ name: '', email: '', password: '', confirmPassword: '', role: 'user' });
+      setFormData({ 
+        name: '', 
+        email: '', 
+        password: '', 
+        confirmPassword: '', 
+        role: 'user',
+        canAccessMinistries: false,
+        canAccessKids: false
+      });
       setIsOpen(false);
       
       // Recarregar a página para atualizar a lista
@@ -222,6 +249,30 @@ export const AddUserDialog = () => {
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Permissões de Acesso</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="ministries"
+                checked={formData.canAccessMinistries}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessMinistries: checked as boolean }))}
+              />
+              <Label htmlFor="ministries" className="text-sm font-normal">
+                Acesso aos Ministérios
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="kids"
+                checked={formData.canAccessKids}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessKids: checked as boolean }))}
+              />
+              <Label htmlFor="kids" className="text-sm font-normal">
+                Acesso ao Ministério Infantil
+              </Label>
+            </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
