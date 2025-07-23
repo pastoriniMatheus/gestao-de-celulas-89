@@ -102,7 +102,7 @@ export const MonthlyBirthdaysSection = () => {
                       return (
                         <div 
                           key={contact.id} 
-                          className={`flex items-center justify-between p-3 rounded-md border ${isMobile ? 'min-h-[90px]' : 'min-h-[80px]'} ${
+                          className={`flex items-center justify-between p-3 rounded-md border min-h-[80px] ${
                             isToday 
                               ? 'bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-300' 
                               : 'bg-orange-50 border-orange-100'
@@ -110,9 +110,7 @@ export const MonthlyBirthdaysSection = () => {
                         >
                           <div className="flex-1 min-w-0 pr-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-gray-900 truncate`}>
-                                {contact.name}
-                              </p>
+                              <p className="text-sm font-medium text-gray-900 truncate">{contact.name}</p>
                               {isToday && (
                                 <Badge className="bg-orange-500 text-white text-xs flex-shrink-0">
                                   HOJE!
@@ -129,10 +127,10 @@ export const MonthlyBirthdaysSection = () => {
                           <Button
                             size="sm"
                             onClick={() => handleSendMessage(contact.name, contact.whatsapp)}
-                            className={`bg-green-600 hover:bg-green-700 ${isMobile ? 'h-9 px-3 text-xs' : 'h-8 text-xs'} flex-shrink-0`}
+                            className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
                           >
                             <Phone className="h-3 w-3 mr-1" />
-                            {isMobile ? 'Enviar' : 'WhatsApp'}
+                            {isMobile ? 'WhatsApp' : 'Enviar'}
                           </Button>
                         </div>
                       );

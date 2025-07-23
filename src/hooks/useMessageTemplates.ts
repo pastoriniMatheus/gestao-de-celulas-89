@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export interface MessageTemplate {
   id: string;
   name: string;
-  template_type: 'custom' | 'birthday' | 'welcome' | 'reminder';
+  template_type: 'birthday' | 'welcome' | 'reminder' | 'custom';
   subject?: string;
   message: string;
   variables: string[];
@@ -25,103 +26,83 @@ export const useMessageTemplates = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar templates:', error);
-        return;
-      }
-
-      const formattedTemplates: MessageTemplate[] = (data || []).map((template) => ({
-        id: template.id,
-        name: template.name,
-        template_type: template.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
-        subject: template.subject || undefined,
-        message: template.message,
-        variables: Array.isArray(template.variables) 
-          ? template.variables.filter((v): v is string => typeof v === 'string')
+      if (error) throw error;
+      
+      // Transform the data to match our interface
+      const transformedData: MessageTemplate[] = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        template_type: item.template_type as 'birthday' | 'welcome' | 'reminder' | 'custom',
+        subject: item.subject || undefined,
+        message: item.message,
+        variables: Array.isArray(item.variables) 
+          ? item.variables.filter(v => typeof v === 'string').map(v => String(v))
           : [],
-        active: template.active,
-        created_at: template.created_at,
-        updated_at: template.updated_at
+        active: item.active,
+        created_at: item.created_at,
+        updated_at: item.updated_at
       }));
-
-      setTemplates(formattedTemplates);
+      
+      setTemplates(transformedData);
     } catch (error) {
       console.error('Erro ao buscar templates:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar templates de mensagem",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const addTemplate = async (template: Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>) => {
+  const addTemplate = async (templateData: Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
         .from('message_templates')
-        .insert([template])
+        .insert([templateData])
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao adicionar template:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      const formattedTemplate: MessageTemplate = {
-        id: data.id,
-        name: data.name,
-        template_type: data.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
-        subject: data.subject || undefined,
-        message: data.message,
-        variables: Array.isArray(data.variables) 
-          ? data.variables.filter((v): v is string => typeof v === 'string')
-          : [],
-        active: data.active,
-        created_at: data.created_at,
-        updated_at: data.updated_at
-      };
+      toast({
+        title: "Sucesso",
+        description: "Template de mensagem criado com sucesso!"
+      });
 
-      setTemplates(prev => [formattedTemplate, ...prev]);
-      return formattedTemplate;
+      return data;
     } catch (error) {
-      console.error('Erro ao adicionar template:', error);
+      console.error('Erro ao criar template:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar template de mensagem",
+        variant: "destructive"
+      });
       throw error;
     }
   };
 
   const updateTemplate = async (id: string, updates: Partial<MessageTemplate>) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('message_templates')
         .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
-      if (error) {
-        console.error('Erro ao atualizar template:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      const formattedTemplate: MessageTemplate = {
-        id: data.id,
-        name: data.name,
-        template_type: data.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
-        subject: data.subject || undefined,
-        message: data.message,
-        variables: Array.isArray(data.variables) 
-          ? data.variables.filter((v): v is string => typeof v === 'string')
-          : [],
-        active: data.active,
-        created_at: data.created_at,
-        updated_at: data.updated_at
-      };
-
-      setTemplates(prev => prev.map(template => 
-        template.id === id ? formattedTemplate : template
-      ));
-      return formattedTemplate;
+      toast({
+        title: "Sucesso",
+        description: "Template atualizado com sucesso!"
+      });
     } catch (error) {
       console.error('Erro ao atualizar template:', error);
-      throw error;
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar template",
+        variant: "destructive"
+      });
     }
   };
 
@@ -132,20 +113,52 @@ export const useMessageTemplates = () => {
         .delete()
         .eq('id', id);
 
-      if (error) {
-        console.error('Erro ao deletar template:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      setTemplates(prev => prev.filter(template => template.id !== id));
+      toast({
+        title: "Sucesso",
+        description: "Template deletado com sucesso!"
+      });
     } catch (error) {
       console.error('Erro ao deletar template:', error);
-      throw error;
+      toast({
+        title: "Erro",
+        description: "Erro ao deletar template",
+        variant: "destructive"
+      });
     }
   };
 
   useEffect(() => {
     fetchTemplates();
+
+    // Criar canal único com nome baseado em timestamp
+    const channelName = `message-templates-${Date.now()}`;
+    console.log('Creating message templates channel:', channelName);
+
+    // Real-time updates
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'message_templates'
+        },
+        () => {
+          console.log('Message templates table changed, refetching...');
+          fetchTemplates();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Message templates channel subscription status:', status);
+      });
+
+    return () => {
+      console.log('Cleaning up message templates channel:', channelName);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {

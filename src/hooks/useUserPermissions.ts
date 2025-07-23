@@ -1,10 +1,8 @@
 
 import { useAuth } from '@/components/AuthProvider';
-import { useUserMinistryAccess } from './useUserMinistryAccess';
 
 export const useUserPermissions = () => {
   const { userProfile } = useAuth();
-  const { canAccessMinistries, canAccessKids } = useUserMinistryAccess();
 
   console.log('useUserPermissions - userProfile:', userProfile);
   console.log('useUserPermissions - role:', userProfile?.role);
@@ -21,13 +19,11 @@ export const useUserPermissions = () => {
   const canAccessSettings = isAdmin; // Apenas admin pode acessar configurações
   const canAccessEvents = isAdmin;
   const canAccessQRCodes = isAdmin;
-  const canAccessMessaging = isAdmin || isLeader; // Líderes podem acessar mensagens
+  const canAccessMessaging = isAdmin || isLeader;
   const canAccessContacts = true; // Sempre permitir acesso aos contatos
   const canAccessDashboard = true; // Sempre permitir acesso ao dashboard
   const canAccessCells = true; // Sempre permitir acesso às células
   const canAccessPipeline = true; // Sempre permitir acesso ao pipeline
-  const canAccessMinistriesPage = isAdmin || canAccessMinistries(); // Admin ou usuários com permissão específica
-  const canAccessKidsPage = isAdmin || canAccessKids(); // Admin ou usuários com permissão específica
 
   const permissions = {
     canAccessUserManagement,
@@ -39,8 +35,6 @@ export const useUserPermissions = () => {
     canAccessDashboard,
     canAccessCells,
     canAccessPipeline,
-    canAccessMinistriesPage,
-    canAccessKidsPage,
     isLeader,
     isAdmin,
     userProfile

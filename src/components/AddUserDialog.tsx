@@ -5,25 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserMinistryAccess } from '@/hooks/useUserMinistryAccess';
 import { toast } from '@/hooks/use-toast';
 
 export const AddUserDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { updateMinistryAccess } = useUserMinistryAccess();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user',
-    canAccessMinistries: false,
-    canAccessKids: false
+    role: 'user'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +77,7 @@ export const AddUserDialog = () => {
 
       if (authData.user) {
         // Criar perfil na tabela profiles
-        const { data: profileData, error: profileError } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
             user_id: authData.user.id,
@@ -90,9 +85,7 @@ export const AddUserDialog = () => {
             email: formData.email,
             role: formData.role,
             active: true
-          }])
-          .select()
-          .single();
+          }]);
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError);
@@ -102,17 +95,7 @@ export const AddUserDialog = () => {
             variant: "default",
           });
         } else {
-          console.log('Perfil criado com sucesso:', profileData);
-          
-          // Configurar acesso aos ministérios se necessário
-          if (formData.canAccessMinistries || formData.canAccessKids) {
-            try {
-              await updateMinistryAccess(profileData.id, formData.canAccessMinistries, formData.canAccessKids);
-            } catch (accessError) {
-              console.error('Erro ao configurar acesso aos ministérios:', accessError);
-            }
-          }
-          
+          console.log('Perfil criado com sucesso');
           toast({
             title: "Sucesso",
             description: "Usuário criado com sucesso! Um email de confirmação foi enviado.",
@@ -120,15 +103,7 @@ export const AddUserDialog = () => {
         }
       }
 
-      setFormData({ 
-        name: '', 
-        email: '', 
-        password: '', 
-        confirmPassword: '', 
-        role: 'user',
-        canAccessMinistries: false,
-        canAccessKids: false
-      });
+      setFormData({ name: '', email: '', password: '', confirmPassword: '', role: 'user' });
       setIsOpen(false);
       
       // Recarregar a página para atualizar a lista
@@ -247,32 +222,6 @@ export const AddUserDialog = () => {
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-3">
-            <Label>Permissões de Acesso</Label>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="canAccessMinistries"
-                checked={formData.canAccessMinistries}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessMinistries: checked as boolean }))}
-              />
-              <Label htmlFor="canAccessMinistries" className="text-sm font-normal">
-                Acesso aos Ministérios
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="canAccessKids"
-                checked={formData.canAccessKids}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessKids: checked as boolean }))}
-              />
-              <Label htmlFor="canAccessKids" className="text-sm font-normal">
-                Acesso ao Ministério Infantil e Jovens
-              </Label>
-            </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
