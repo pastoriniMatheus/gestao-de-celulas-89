@@ -1,10 +1,11 @@
+
 import {
   Home,
   Users,
   Calendar,
   Settings,
   UserPlus,
-  Qrcode,
+  QrCode,
   MessageSquare,
   LayoutDashboard,
   Baby,
@@ -37,7 +38,7 @@ export const AppSidebar = () => {
     canAccessKidsPage 
   } = useUserPermissions();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       title: "Dashboard",
       icon: LayoutDashboard,
@@ -88,7 +89,7 @@ export const AppSidebar = () => {
     }] : []),
     ...(canAccessQRCodes ? [{
       title: "QR Codes",
-      icon: Qrcode,
+      icon: QrCode,
       href: "/qrcodes",
       isActive: location.pathname === "/qrcodes"
     }] : []),

@@ -111,7 +111,7 @@ export const MessageTemplateManager = () => {
                       <Label htmlFor="template-type">Tipo</Label>
                       <Select
                         value={formData.template_type}
-                        onValueChange={(value: any) => setFormData({...formData, template_type: value})}
+                        onValueChange={(value: 'birthday' | 'welcome' | 'reminder' | 'custom') => setFormData({...formData, template_type: value})}
                       >
                         <SelectTrigger>
                           <SelectValue />

@@ -1,10 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface MessageTemplate {
   id: string;
   name: string;
-  template_type: 'custom' | string;
+  template_type: 'custom' | 'birthday' | 'welcome' | 'reminder';
+  subject?: string;
   message: string;
   variables: string[];
   active: boolean;
@@ -28,7 +30,19 @@ export const useMessageTemplates = () => {
         return;
       }
 
-      setTemplates(data || []);
+      const formattedTemplates: MessageTemplate[] = (data || []).map((template) => ({
+        id: template.id,
+        name: template.name,
+        template_type: template.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
+        subject: template.subject || '',
+        message: template.message,
+        variables: Array.isArray(template.variables) ? template.variables : [],
+        active: template.active,
+        created_at: template.created_at,
+        updated_at: template.updated_at
+      }));
+
+      setTemplates(formattedTemplates);
     } catch (error) {
       console.error('Erro ao buscar templates:', error);
     } finally {
@@ -49,8 +63,20 @@ export const useMessageTemplates = () => {
         throw error;
       }
 
-      setTemplates(prev => [data, ...prev]);
-      return data;
+      const formattedTemplate: MessageTemplate = {
+        id: data.id,
+        name: data.name,
+        template_type: data.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
+        subject: data.subject || '',
+        message: data.message,
+        variables: Array.isArray(data.variables) ? data.variables : [],
+        active: data.active,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
+      setTemplates(prev => [formattedTemplate, ...prev]);
+      return formattedTemplate;
     } catch (error) {
       console.error('Erro ao adicionar template:', error);
       throw error;
@@ -71,10 +97,22 @@ export const useMessageTemplates = () => {
         throw error;
       }
 
+      const formattedTemplate: MessageTemplate = {
+        id: data.id,
+        name: data.name,
+        template_type: data.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
+        subject: data.subject || '',
+        message: data.message,
+        variables: Array.isArray(data.variables) ? data.variables : [],
+        active: data.active,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
       setTemplates(prev => prev.map(template => 
-        template.id === id ? { ...template, ...data } : template
+        template.id === id ? formattedTemplate : template
       ));
-      return data;
+      return formattedTemplate;
     } catch (error) {
       console.error('Erro ao atualizar template:', error);
       throw error;
