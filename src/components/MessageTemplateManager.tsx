@@ -6,194 +6,130 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, MessageSquare } from 'lucide-react';
-import { useMessageTemplates } from '@/hooks/useMessageTemplates';
-import { useToast } from '@/hooks/use-toast';
+import { useMessageTemplates, MessageTemplate } from '@/hooks/useMessageTemplates';
 
 export const MessageTemplateManager = () => {
   const { templates, loading, addTemplate, updateTemplate, deleteTemplate } = useMessageTemplates();
-  const { toast } = useToast();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    template_type: 'custom' as 'custom' | 'birthday' | 'welcome' | 'reminder',
+    template_type: 'custom' as 'birthday' | 'welcome' | 'reminder' | 'custom',
     subject: '',
     message: '',
-    variables: [] as string[]
+    variables: [] as string[],
+    active: true
   });
 
-  const handleCreateTemplate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      template_type: 'custom',
+      subject: '',
+      message: '',
+      variables: [],
+      active: true
+    });
+    setEditingTemplate(null);
+  };
+
+  const handleSubmit = async () => {
     try {
-      await addTemplate({
-        ...formData,
-        active: true
-      });
-      setIsCreateDialogOpen(false);
-      setFormData({ name: '', template_type: 'custom', subject: '', message: '', variables: [] });
-      toast({
-        title: "Sucesso",
-        description: "Template criado com sucesso!"
-      });
+      if (editingTemplate) {
+        await updateTemplate(editingTemplate.id, formData);
+      } else {
+        await addTemplate(formData);
+      }
+      resetForm();
+      setIsOpen(false);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao criar template",
-        variant: "destructive"
-      });
+      console.error('Erro ao salvar template:', error);
     }
   };
 
-  const handleEditTemplate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTemplate) return;
-    
-    try {
-      await updateTemplate(selectedTemplate.id, formData);
-      setIsEditDialogOpen(false);
-      setSelectedTemplate(null);
-      setFormData({ name: '', template_type: 'custom', subject: '', message: '', variables: [] });
-      toast({
-        title: "Sucesso",
-        description: "Template atualizado com sucesso!"
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar template",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteTemplate = async (templateId: string, templateName: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o template "${templateName}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
-
-    try {
-      await deleteTemplate(templateId);
-      toast({
-        title: "Sucesso",
-        description: "Template excluído com sucesso!"
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir template",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const openEditDialog = (template: any) => {
-    setSelectedTemplate(template);
+  const handleEdit = (template: MessageTemplate) => {
+    setEditingTemplate(template);
     setFormData({
       name: template.name,
       template_type: template.template_type,
       subject: template.subject || '',
       message: template.message,
-      variables: template.variables || []
+      variables: template.variables,
+      active: template.active
     });
-    setIsEditDialogOpen(true);
+    setIsOpen(true);
   };
 
-  const getTypeBadge = (type: string) => {
-    const variants = {
-      custom: 'bg-blue-100 text-blue-800',
-      birthday: 'bg-pink-100 text-pink-800',
-      welcome: 'bg-green-100 text-green-800',
-      reminder: 'bg-orange-100 text-orange-800'
-    };
-
-    const labels = {
-      custom: 'Personalizado',
-      birthday: 'Aniversário',
-      welcome: 'Boas-vindas',
-      reminder: 'Lembrete'
-    };
-
-    return (
-      <Badge className={variants[type as keyof typeof variants] || variants.custom}>
-        {labels[type as keyof typeof labels] || type}
-      </Badge>
-    );
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja deletar este template?')) {
+      await deleteTemplate(id);
+    }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Carregando templates...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-blue-600" />
-                Templates de Mensagens
-              </CardTitle>
-              <CardDescription>
-                Gerencie templates para envio de mensagens automáticas
-              </CardDescription>
-            </div>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-blue-600" />
+            Templates de Mensagem
+          </CardTitle>
+          <CardDescription>
+            Gerencie templates para diferentes tipos de mensagens
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button onClick={resetForm}>
+                  <Plus className="h-4 w-4 mr-2" />
                   Novo Template
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Criar Novo Template</DialogTitle>
-                  <DialogDescription>
-                    Crie um template para envio de mensagens
-                  </DialogDescription>
+                  <DialogTitle>
+                    {editingTemplate ? 'Editar Template' : 'Novo Template'}
+                  </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleCreateTemplate} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="name">Nome do Template</Label>
+                      <Label htmlFor="template-name">Nome do Template</Label>
                       <Input
-                        id="name"
+                        id="template-name"
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        placeholder="Ex: Boas-vindas à célula"
-                        required
+                        placeholder="Nome do template"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="type">Tipo</Label>
-                      <Select value={formData.template_type} onValueChange={(value) => setFormData({...formData, template_type: value as any})}>
+                      <Label htmlFor="template-type">Tipo</Label>
+                      <Select
+                        value={formData.template_type}
+                        onValueChange={(value: any) => setFormData({...formData, template_type: value})}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="custom">Personalizado</SelectItem>
                           <SelectItem value="birthday">Aniversário</SelectItem>
                           <SelectItem value="welcome">Boas-vindas</SelectItem>
                           <SelectItem value="reminder">Lembrete</SelectItem>
+                          <SelectItem value="custom">Personalizado</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   
                   <div>
-                    <Label htmlFor="subject">Assunto (opcional)</Label>
+                    <Label htmlFor="template-subject">Assunto (opcional)</Label>
                     <Input
-                      id="subject"
+                      id="template-subject"
                       value={formData.subject}
                       onChange={(e) => setFormData({...formData, subject: e.target.value})}
                       placeholder="Assunto da mensagem"
@@ -201,150 +137,85 @@ export const MessageTemplateManager = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="message">Mensagem</Label>
+                    <Label htmlFor="template-message">Mensagem</Label>
                     <Textarea
-                      id="message"
+                      id="template-message"
                       value={formData.message}
                       onChange={(e) => setFormData({...formData, message: e.target.value})}
-                      placeholder="Escreva sua mensagem aqui..."
-                      rows={4}
-                      required
+                      placeholder="Digite sua mensagem aqui. Use {{nome}} para variáveis."
+                      rows={6}
                     />
                   </div>
                   
-                  <div className="flex gap-2 justify-end">
-                    <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="template-active"
+                      checked={formData.active}
+                      onCheckedChange={(checked) => setFormData({...formData, active: checked})}
+                    />
+                    <Label htmlFor="template-active">Template ativo</Label>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>
                       Cancelar
                     </Button>
-                    <Button type="submit">
-                      Criar Template
+                    <Button onClick={handleSubmit}>
+                      {editingTemplate ? 'Atualizar' : 'Criar'} Template
                     </Button>
                   </div>
-                </form>
+                </div>
               </DialogContent>
             </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Assunto</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            
+            {loading ? (
+              <div className="text-center py-4">Carregando templates...</div>
+            ) : (
+              <div className="space-y-2">
                 {templates.map((template) => (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">{template.name}</TableCell>
-                    <TableCell>{getTypeBadge(template.template_type)}</TableCell>
-                    <TableCell>{template.subject || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={template.active ? "default" : "secondary"}>
-                        {template.active ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditDialog(template)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteTemplate(template.id, template.name)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                  <div key={template.id} className="flex items-center justify-between p-4 border rounded">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">{template.name}</h3>
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                          {template.template_type}
+                        </span>
+                        {!template.active && (
+                          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                            Inativo
+                          </span>
+                        )}
                       </div>
-                    </TableCell>
-                  </TableRow>
+                      {template.subject && (
+                        <p className="text-sm text-gray-600 mt-1">Assunto: {template.subject}</p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                        {template.message}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(template)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(template.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Dialog de Edição */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Template</DialogTitle>
-            <DialogDescription>
-              Atualize as informações do template
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditTemplate} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit-name">Nome do Template</Label>
-                <Input
-                  id="edit-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="Ex: Boas-vindas à célula"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-type">Tipo</Label>
-                <Select value={formData.template_type} onValueChange={(value) => setFormData({...formData, template_type: value as any})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                    <SelectItem value="birthday">Aniversário</SelectItem>
-                    <SelectItem value="welcome">Boas-vindas</SelectItem>
-                    <SelectItem value="reminder">Lembrete</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="edit-subject">Assunto (opcional)</Label>
-              <Input
-                id="edit-subject"
-                value={formData.subject}
-                onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                placeholder="Assunto da mensagem"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="edit-message">Mensagem</Label>
-              <Textarea
-                id="edit-message"
-                value={formData.message}
-                onChange={(e) => setFormData({...formData, message: e.target.value})}
-                placeholder="Escreva sua mensagem aqui..."
-                rows={4}
-                required
-              />
-            </div>
-            
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit">
-                Salvar Alterações
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

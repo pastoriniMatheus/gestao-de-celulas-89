@@ -1133,41 +1133,6 @@ export type Database = {
           },
         ]
       }
-      user_ministry_access: {
-        Row: {
-          can_access_kids: boolean
-          can_access_ministries: boolean
-          created_at: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          can_access_kids?: boolean
-          can_access_ministries?: boolean
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          can_access_kids?: boolean
-          can_access_ministries?: boolean
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_ministry_access_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       webhook_configs: {
         Row: {
           active: boolean

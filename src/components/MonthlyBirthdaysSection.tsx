@@ -65,7 +65,7 @@ export const MonthlyBirthdaysSection = () => {
       >
         <Gift className="h-4 w-4" />
         {monthlyBirthdays.length > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-orange-500 flex items-center justify-center">
+          <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-orange-500 flex items-center justify-center">
             {monthlyBirthdays.length}
           </Badge>
         )}
