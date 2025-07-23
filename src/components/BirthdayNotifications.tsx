@@ -64,19 +64,19 @@ export const BirthdayNotifications = () => {
           {todayBirthdays.map((birthday) => (
             <div
               key={birthday.contact_id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200"
             >
-              <div className="flex items-center gap-3 mb-3 sm:mb-0">
-                <div className="flex-shrink-0 w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
-                  <Gift className="h-5 w-5 text-pink-600" />
+              <div className="flex items-center gap-3 mb-2 sm:mb-0 min-w-0 flex-1">
+                <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                  <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-pink-600" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-gray-900 truncate">
+                  <p className="font-semibold text-gray-900 truncate text-sm sm:text-base">
                     {birthday.contact_name}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Calendar className="h-3 w-3 text-gray-500" />
-                    <span className="text-sm text-gray-600">
+                    <Calendar className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-gray-600">
                       {birthday.age ? `${birthday.age} anos` : 'Idade não informada'}
                     </span>
                   </div>
@@ -84,11 +84,11 @@ export const BirthdayNotifications = () => {
               </div>
               
               {birthday.whatsapp && (
-                <div className="flex justify-end">
+                <div className="flex justify-end sm:justify-start flex-shrink-0">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200 text-xs sm:text-sm"
                     onClick={() => {
                       const message = `🎉 Parabéns pelo seu aniversário! Que Deus abençoe sua vida com muita alegria e paz! 🎂`;
                       window.open(
@@ -97,7 +97,7 @@ export const BirthdayNotifications = () => {
                       );
                     }}
                   >
-                    <Phone className="h-4 w-4 mr-2" />
+                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     <span className="hidden sm:inline">Parabenizar</span>
                     <span className="sm:hidden">WhatsApp</span>
                   </Button>
