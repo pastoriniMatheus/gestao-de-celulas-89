@@ -34,9 +34,11 @@ export const useMessageTemplates = () => {
         id: template.id,
         name: template.name,
         template_type: template.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
-        subject: template.subject || '',
+        subject: template.subject || undefined,
         message: template.message,
-        variables: Array.isArray(template.variables) ? template.variables : [],
+        variables: Array.isArray(template.variables) 
+          ? template.variables.filter((v): v is string => typeof v === 'string')
+          : [],
         active: template.active,
         created_at: template.created_at,
         updated_at: template.updated_at
@@ -67,9 +69,11 @@ export const useMessageTemplates = () => {
         id: data.id,
         name: data.name,
         template_type: data.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
-        subject: data.subject || '',
+        subject: data.subject || undefined,
         message: data.message,
-        variables: Array.isArray(data.variables) ? data.variables : [],
+        variables: Array.isArray(data.variables) 
+          ? data.variables.filter((v): v is string => typeof v === 'string')
+          : [],
         active: data.active,
         created_at: data.created_at,
         updated_at: data.updated_at
@@ -101,9 +105,11 @@ export const useMessageTemplates = () => {
         id: data.id,
         name: data.name,
         template_type: data.template_type as 'custom' | 'birthday' | 'welcome' | 'reminder',
-        subject: data.subject || '',
+        subject: data.subject || undefined,
         message: data.message,
-        variables: Array.isArray(data.variables) ? data.variables : [],
+        variables: Array.isArray(data.variables) 
+          ? data.variables.filter((v): v is string => typeof v === 'string')
+          : [],
         active: data.active,
         created_at: data.created_at,
         updated_at: data.updated_at

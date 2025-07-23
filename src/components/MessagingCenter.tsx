@@ -25,11 +25,7 @@ export const MessagingCenter = () => {
     if (!message.trim() || selectedContacts.length === 0) return;
 
     try {
-      await sendMessage({
-        message,
-        contacts: selectedContacts,
-        type: messageType
-      });
+      await sendMessage(selectedContacts, message);
       setMessage('');
       setSelectedContacts([]);
     } catch (error) {
@@ -37,7 +33,8 @@ export const MessagingCenter = () => {
     }
   };
 
-  const filteredHistory = history.filter(msg => msg.type === messageType);
+  // Filter history based on message type - for now show all since MessageHistory doesn't have type
+  const filteredHistory = history;
 
   return (
     <div className="space-y-6">
@@ -153,16 +150,16 @@ export const MessagingCenter = () => {
                     {filteredHistory.map((msg) => (
                       <div key={msg.id} className="p-4 border rounded">
                         <div className="flex justify-between items-start mb-2">
-                          <span className="font-medium">{msg.type}</span>
+                          <span className="font-medium">Mensagem</span>
                           <span className="text-sm text-gray-500">
                             {new Date(msg.sent_at).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700">{msg.message}</p>
+                        <p className="text-sm text-gray-700">{msg.message_content}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <Users className="h-4 w-4 text-gray-400" />
                           <span className="text-sm text-gray-500">
-                            {msg.contacts?.length || 0} contatos
+                            {msg.recipients_count} contatos
                           </span>
                           {msg.status === 'sent' && (
                             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
