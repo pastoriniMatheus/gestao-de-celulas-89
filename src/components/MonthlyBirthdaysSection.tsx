@@ -72,7 +72,7 @@ export const MonthlyBirthdaysSection = () => {
       </Button>
 
       {isOpen && (
-        <Card className={`absolute ${isMobile ? 'right-0 left-0 top-12 mx-2 max-w-none' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
+        <Card className={`absolute ${isMobile ? 'right-4 left-4 top-12 max-w-none' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -91,8 +91,8 @@ export const MonthlyBirthdaysSection = () => {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className={`${isMobile ? 'max-h-[60vh]' : 'h-[400px]'}`}>
-              <div className={`space-y-2 ${isMobile ? 'p-3' : 'p-4'}`}>
+            <ScrollArea className={`${isMobile ? 'max-h-[70vh]' : 'h-[400px]'}`}>
+              <div className={`space-y-2 ${isMobile ? 'p-4' : 'p-4'}`}>
                 {monthlyBirthdays.length > 0 ? (
                   <div className="space-y-3">
                     {monthlyBirthdays.map(contact => {
@@ -102,14 +102,14 @@ export const MonthlyBirthdaysSection = () => {
                       return (
                         <div 
                           key={contact.id} 
-                          className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'} p-3 rounded-md border ${
+                          className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'} p-4 rounded-md border ${
                             isToday 
                               ? 'bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-300' 
                               : 'bg-orange-50 border-orange-100'
                           }`}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-900 truncate`}>{contact.name}</p>
                               {isToday && (
                                 <Badge className="bg-orange-500 text-white text-xs flex-shrink-0">
