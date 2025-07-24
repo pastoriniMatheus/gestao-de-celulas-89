@@ -72,7 +72,7 @@ export const MonthlyBirthdaysSection = () => {
       </Button>
 
       {isOpen && (
-        <Card className={`absolute ${isMobile ? 'right-4 left-4 top-12 max-w-none' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
+        <Card className={`absolute ${isMobile ? 'right-2 left-2 top-12 max-w-none w-auto' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -91,7 +91,7 @@ export const MonthlyBirthdaysSection = () => {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className={`${isMobile ? 'max-h-[70vh]' : 'h-[400px]'}`}>
+            <ScrollArea className={`${isMobile ? 'max-h-[60vh]' : 'h-[400px]'}`}>
               <div className={`space-y-2 ${isMobile ? 'p-4' : 'p-4'}`}>
                 {monthlyBirthdays.length > 0 ? (
                   <div className="space-y-3">
@@ -117,7 +117,7 @@ export const MonthlyBirthdaysSection = () => {
                                 </Badge>
                               )}
                             </div>
-                            <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-orange-600 font-medium mb-1`}>
+                            <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-orange-600 font-medium mb-2`}>
                               {formatBirthDate(contact.birth_date, contact.day)}
                             </p>
                             <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>

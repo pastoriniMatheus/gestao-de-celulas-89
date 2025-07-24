@@ -63,7 +63,7 @@ export const BirthdayNotifications = () => {
       </Button>
 
       {isOpen && (
-        <Card className={`absolute ${isMobile ? 'right-0 left-0 top-12 mx-2 max-w-none' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
+        <Card className={`absolute ${isMobile ? 'right-2 left-2 top-12 max-w-none w-auto' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -83,16 +83,16 @@ export const BirthdayNotifications = () => {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className={`${isMobile ? 'max-h-[60vh]' : 'h-[400px]'}`}>
-              <div className={`space-y-2 ${isMobile ? 'p-3' : 'p-4'}`}>
+              <div className={`space-y-2 ${isMobile ? 'p-4' : 'p-4'}`}>
                 {birthdays.length > 0 ? (
                   <div className="space-y-3">
                     {birthdays.map(birthday => (
                       <div 
                         key={birthday.contact_id} 
-                        className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'} p-3 rounded-md border bg-red-50 border-red-100`}
+                        className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'} p-4 rounded-md border bg-red-50 border-red-100`}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-2">
                             <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-900 truncate`}>
                               {birthday.contact_name || 'Nome não encontrado'}
                             </p>
@@ -100,7 +100,7 @@ export const BirthdayNotifications = () => {
                               HOJE!
                             </Badge>
                           </div>
-                          <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-red-600 font-medium mb-1`}>
+                          <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-red-600 font-medium mb-2`}>
                             Aniversário hoje{birthday.age ? ` - ${birthday.age} anos` : ''}
                           </p>
                           <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
