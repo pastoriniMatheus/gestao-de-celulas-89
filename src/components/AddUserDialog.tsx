@@ -102,7 +102,7 @@ export const AddUserDialog = () => {
           
           // Criar registro de permissões de ministério se necessário
           if (formData.canAccessMinistries || formData.canAccessKids) {
-            const { error: accessError } = await supabase
+            const { error: accessError } = await (supabase as any)
               .from('user_ministry_access')
               .insert([{
                 user_id: authData.user.id,
