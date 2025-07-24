@@ -19,11 +19,12 @@ export const useUserPermissions = () => {
   const canAccessSettings = isAdmin; // Apenas admin pode acessar configurações
   const canAccessEvents = isAdmin;
   const canAccessQRCodes = isAdmin;
-  const canAccessMessaging = isAdmin || isLeader;
+  const canAccessMessaging = isAdmin || isLeader; // Líderes também podem acessar mensagens
   const canAccessContacts = true; // Sempre permitir acesso aos contatos
   const canAccessDashboard = true; // Sempre permitir acesso ao dashboard
   const canAccessCells = true; // Sempre permitir acesso às células
   const canAccessPipeline = true; // Sempre permitir acesso ao pipeline
+  const canAccessMinistries = isAdmin; // Por padrão apenas admin, será verificado com checkbox
 
   const permissions = {
     canAccessUserManagement,
@@ -35,6 +36,7 @@ export const useUserPermissions = () => {
     canAccessDashboard,
     canAccessCells,
     canAccessPipeline,
+    canAccessMinistries,
     isLeader,
     isAdmin,
     userProfile

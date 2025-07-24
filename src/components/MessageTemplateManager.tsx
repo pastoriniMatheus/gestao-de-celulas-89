@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, MessageSquare } from 'lucide-react';
 import { useMessageTemplates, MessageTemplate } from '@/hooks/useMessageTemplates';
 
@@ -64,9 +65,7 @@ export const MessageTemplateManager = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja deletar este template?')) {
-      await deleteTemplate(id);
-    }
+    await deleteTemplate(id);
   };
 
   return (
@@ -201,13 +200,28 @@ export const MessageTemplateManager = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(template.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja deletar o template "{template.name}"? 
+                              Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(template.id)}>
+                              Deletar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 ))}

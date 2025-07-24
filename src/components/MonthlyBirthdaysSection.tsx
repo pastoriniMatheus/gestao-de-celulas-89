@@ -72,7 +72,7 @@ export const MonthlyBirthdaysSection = () => {
       </Button>
 
       {isOpen && (
-        <Card className={`absolute ${isMobile ? 'right-2 left-2 top-12 max-w-[calc(100vw-1rem)]' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
+        <Card className={`absolute ${isMobile ? 'right-0 left-0 top-12 mx-2 max-w-none' : 'right-0 top-12 w-96'} z-50 shadow-lg border bg-white`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -91,8 +91,8 @@ export const MonthlyBirthdaysSection = () => {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)] max-h-[300px]' : 'h-[400px]'}`}>
-              <div className="space-y-2 p-4">
+            <ScrollArea className={`${isMobile ? 'max-h-[60vh]' : 'h-[400px]'}`}>
+              <div className={`space-y-2 ${isMobile ? 'p-3' : 'p-4'}`}>
                 {monthlyBirthdays.length > 0 ? (
                   <div className="space-y-3">
                     {monthlyBirthdays.map(contact => {
@@ -102,35 +102,35 @@ export const MonthlyBirthdaysSection = () => {
                       return (
                         <div 
                           key={contact.id} 
-                          className={`flex items-center justify-between p-3 rounded-md border min-h-[80px] ${
+                          className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'} p-3 rounded-md border ${
                             isToday 
                               ? 'bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-300' 
                               : 'bg-orange-50 border-orange-100'
                           }`}
                         >
-                          <div className="flex-1 min-w-0 pr-3">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-medium text-gray-900 truncate">{contact.name}</p>
+                              <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-900 truncate`}>{contact.name}</p>
                               {isToday && (
                                 <Badge className="bg-orange-500 text-white text-xs flex-shrink-0">
                                   HOJE!
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-orange-600 font-medium">
+                            <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-orange-600 font-medium mb-1`}>
                               {formatBirthDate(contact.birth_date, contact.day)}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
                               {contact.age !== null ? `${contact.age} anos` : 'Idade não calculada'}
                             </p>
                           </div>
                           <Button
-                            size="sm"
+                            size={isMobile ? "default" : "sm"}
                             onClick={() => handleSendMessage(contact.name, contact.whatsapp)}
-                            className="bg-green-600 hover:bg-green-700 h-8 text-xs flex-shrink-0"
+                            className={`bg-green-600 hover:bg-green-700 ${isMobile ? 'w-full h-10 text-sm' : 'h-8 text-xs flex-shrink-0'}`}
                           >
-                            <Phone className="h-3 w-3 mr-1" />
-                            {isMobile ? 'WhatsApp' : 'Enviar'}
+                            <Phone className={`${isMobile ? 'h-4 w-4' : 'h-3 w-3'} mr-2`} />
+                            Enviar WhatsApp
                           </Button>
                         </div>
                       );
