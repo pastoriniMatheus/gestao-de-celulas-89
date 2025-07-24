@@ -21,7 +21,8 @@ export const AddUserDialog = () => {
     confirmPassword: '',
     role: 'user',
     canAccessMinistries: false,
-    canAccessKids: false
+    canAccessKids: false,
+    activateWithoutConfirmation: false
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,7 +59,7 @@ export const AddUserDialog = () => {
     try {
       console.log('Criando usuário:', formData.email);
       
-      // Usar signup com a URL de redirecionamento correta
+      // Usar signup com opção de confirmação baseada no checkbox
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -67,7 +68,11 @@ export const AddUserDialog = () => {
             name: formData.name,
             role: formData.role
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          // Se "ativar sem confirmação" estiver marcado, confirma o email automaticamente
+          ...(formData.activateWithoutConfirmation && {
+            email_confirm: true
+          })
         }
       });
 
@@ -115,9 +120,13 @@ export const AddUserDialog = () => {
             }
           }
           
+          const successMessage = formData.activateWithoutConfirmation 
+            ? "Usuário criado e ativado com sucesso!" 
+            : "Usuário criado com sucesso! Um email de confirmação foi enviado.";
+          
           toast({
             title: "Sucesso",
-            description: "Usuário criado com sucesso! Um email de confirmação foi enviado.",
+            description: successMessage,
           });
         }
       }
@@ -129,7 +138,8 @@ export const AddUserDialog = () => {
         confirmPassword: '', 
         role: 'user',
         canAccessMinistries: false,
-        canAccessKids: false
+        canAccessKids: false,
+        activateWithoutConfirmation: false
       });
       setIsOpen(false);
       
@@ -249,6 +259,21 @@ export const AddUserDialog = () => {
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Configurações</Label>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="activate-without-confirmation"
+                checked={formData.activateWithoutConfirmation}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, activateWithoutConfirmation: checked as boolean }))}
+              />
+              <Label htmlFor="activate-without-confirmation" className="text-sm font-normal">
+                Ativar sem confirmação por email
+              </Label>
+            </div>
           </div>
 
           <div className="space-y-3">
