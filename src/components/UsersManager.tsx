@@ -121,53 +121,83 @@ export const UsersManager = () => {
         throw new Error('Usuário não encontrado');
       }
 
-      // Primeiro excluir permissões de ministério se existirem
-      if (user.user_id) {
-        const { error: accessError } = await supabase
-          .from('user_ministry_access')
-          .delete()
-          .eq('user_id', user.user_id);
+      let deletedFromAuth = false;
+      let deletedFromProfile = false;
 
-        if (accessError) {
-          console.warn('Erro ao excluir permissões de ministério:', accessError);
+      // Primeiro, tentar excluir do sistema de autenticação se tiver user_id
+      if (user.user_id) {
+        try {
+          console.log('Tentando excluir do sistema de autenticação...');
+          const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
+          
+          if (authError) {
+            console.error('Erro ao excluir usuário do auth:', authError);
+            // Não interromper o processo, continuar com a exclusão do perfil
+          } else {
+            console.log('Usuário excluído do sistema de autenticação com sucesso');
+            deletedFromAuth = true;
+          }
+        } catch (authDeleteError) {
+          console.error('Erro geral na exclusão do auth:', authDeleteError);
+        }
+      }
+
+      // Excluir permissões de ministério se existirem
+      if (user.user_id) {
+        try {
+          const { error: accessError } = await supabase
+            .from('user_ministry_access')
+            .delete()
+            .eq('user_id', user.user_id);
+
+          if (accessError) {
+            console.warn('Erro ao excluir permissões de ministério:', accessError);
+          } else {
+            console.log('Permissões de ministério excluídas com sucesso');
+          }
+        } catch (accessDeleteError) {
+          console.warn('Erro geral na exclusão das permissões:', accessDeleteError);
         }
       }
 
       // Excluir do profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId);
 
-      if (profileError) {
-        console.error('Erro ao excluir perfil:', profileError);
-        throw profileError;
-      }
-
-      // Excluir do sistema de autenticação se tiver user_id
-      if (user.user_id) {
-        try {
-          const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
-          if (authError) {
-            console.error('Erro ao excluir usuário do auth:', authError);
-            // Não interromper o processo se já excluiu do profiles
-            toast({
-              title: "Parcialmente Excluído",
-              description: "Usuário removido do sistema, mas pode ainda existir no sistema de autenticação.",
-              variant: "destructive"
-            });
-          } else {
-            console.log('Usuário excluído do auth com sucesso');
-          }
-        } catch (authDeleteError) {
-          console.warn('Erro na exclusão do auth:', authDeleteError);
+        if (profileError) {
+          console.error('Erro ao excluir perfil:', profileError);
+          throw profileError;
         }
+
+        console.log('Perfil excluído com sucesso');
+        deletedFromProfile = true;
+      } catch (profileDeleteError) {
+        console.error('Erro na exclusão do perfil:', profileDeleteError);
+        throw profileDeleteError;
       }
 
-      toast({
-        title: "Sucesso",
-        description: "Usuário excluído completamente do sistema!"
-      });
+      // Mensagem de sucesso baseada no que foi excluído
+      if (deletedFromAuth && deletedFromProfile) {
+        toast({
+          title: "Sucesso",
+          description: "Usuário excluído completamente do sistema!"
+        });
+      } else if (deletedFromProfile) {
+        toast({
+          title: "Parcialmente Excluído",
+          description: "Usuário removido das tabelas, mas pode ainda existir no sistema de autenticação.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Não foi possível excluir o usuário completamente.",
+          variant: "destructive"
+        });
+      }
 
       // Atualizar lista
       fetchUsers();

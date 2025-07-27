@@ -59,7 +59,7 @@ export const AddUserDialog = () => {
     try {
       console.log('Criando usuário:', formData.email);
       
-      // Definir os metadados do usuário com email_verified baseado no checkbox
+      // Definir os metadados do usuário
       const userMetadata = {
         name: formData.name,
         role: formData.role,
@@ -93,7 +93,7 @@ export const AddUserDialog = () => {
               { 
                 email_confirm: true,
                 user_metadata: {
-                  ...authData.user.user_metadata,
+                  ...userMetadata,
                   email_verified: true
                 }
               }
