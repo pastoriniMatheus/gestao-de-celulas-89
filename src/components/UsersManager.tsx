@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -122,7 +121,19 @@ export const UsersManager = () => {
         throw new Error('Usuário não encontrado');
       }
 
-      // Primeiro excluir do profiles
+      // Primeiro excluir permissões de ministério se existirem
+      if (user.user_id) {
+        const { error: accessError } = await supabase
+          .from('user_ministry_access')
+          .delete()
+          .eq('user_id', user.user_id);
+
+        if (accessError) {
+          console.warn('Erro ao excluir permissões de ministério:', accessError);
+        }
+      }
+
+      // Excluir do profiles
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -133,23 +144,29 @@ export const UsersManager = () => {
         throw profileError;
       }
 
-      // Tentar excluir do auth (se tiver user_id)
+      // Excluir do sistema de autenticação se tiver user_id
       if (user.user_id) {
         try {
           const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
           if (authError) {
-            console.warn('Erro ao excluir usuário do auth (continuando):', authError);
-            // Não throw aqui pois o perfil já foi excluído
+            console.error('Erro ao excluir usuário do auth:', authError);
+            // Não interromper o processo se já excluiu do profiles
+            toast({
+              title: "Parcialmente Excluído",
+              description: "Usuário removido do sistema, mas pode ainda existir no sistema de autenticação.",
+              variant: "destructive"
+            });
+          } else {
+            console.log('Usuário excluído do auth com sucesso');
           }
         } catch (authDeleteError) {
-          console.warn('Erro na exclusão do auth (continuando):', authDeleteError);
-          // Não interromper o processo
+          console.warn('Erro na exclusão do auth:', authDeleteError);
         }
       }
 
       toast({
         title: "Sucesso",
-        description: "Usuário excluído com sucesso!"
+        description: "Usuário excluído completamente do sistema!"
       });
 
       // Atualizar lista

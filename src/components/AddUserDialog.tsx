@@ -1,5 +1,4 @@
 
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -66,7 +65,8 @@ export const AddUserDialog = () => {
         options: {
           data: {
             name: formData.name,
-            role: formData.role
+            role: formData.role,
+            email_verified: formData.activateWithoutConfirmation
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
@@ -85,11 +85,14 @@ export const AddUserDialog = () => {
           console.log('Confirmando email automaticamente...');
           
           try {
-            // Usar a API admin para confirmar o email automaticamente
             const { error: confirmError } = await supabase.auth.admin.updateUserById(
               authData.user.id,
               { 
-                email_confirm: true
+                email_confirm: true,
+                user_metadata: {
+                  ...authData.user.user_metadata,
+                  email_verified: true
+                }
               }
             );
 
@@ -124,8 +127,8 @@ export const AddUserDialog = () => {
         } else {
           console.log('Perfil criado com sucesso');
           
-          // Criar registro de permissões de ministério se necessário
-          if (formData.canAccessMinistries || formData.canAccessKids) {
+          // Criar registro de permissões de ministério apenas se o usuário for do tipo "user" e tiver permissões selecionadas
+          if (formData.role === 'user' && (formData.canAccessMinistries || formData.canAccessKids)) {
             const { error: accessError } = await supabase
               .from('user_ministry_access')
               .insert([{
@@ -296,31 +299,34 @@ export const AddUserDialog = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <Label>Permissões Especiais</Label>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="ministries-access"
-                checked={formData.canAccessMinistries}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessMinistries: checked as boolean }))}
-              />
-              <Label htmlFor="ministries-access" className="text-sm font-normal">
-                Acesso à sessão Ministérios
-              </Label>
-            </div>
+          {/* Permissões especiais apenas para usuários do tipo "user" */}
+          {formData.role === 'user' && (
+            <div className="space-y-3">
+              <Label>Permissões Especiais</Label>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="ministries-access"
+                  checked={formData.canAccessMinistries}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessMinistries: checked as boolean }))}
+                />
+                <Label htmlFor="ministries-access" className="text-sm font-normal">
+                  Acesso à sessão Ministérios
+                </Label>
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="kids-access"
-                checked={formData.canAccessKids}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessKids: checked as boolean }))}
-              />
-              <Label htmlFor="kids-access" className="text-sm font-normal">
-                Acesso à sessão Ministério Kids e Jovens
-              </Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="kids-access"
+                  checked={formData.canAccessKids}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, canAccessKids: checked as boolean }))}
+                />
+                <Label htmlFor="kids-access" className="text-sm font-normal">
+                  Acesso à sessão Ministério Kids e Jovens
+                </Label>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button
@@ -340,4 +346,3 @@ export const AddUserDialog = () => {
     </Dialog>
   );
 };
-
