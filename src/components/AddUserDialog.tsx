@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -59,21 +58,25 @@ export const AddUserDialog = () => {
     try {
       console.log('Criando usuário:', formData.email);
       
-      // Usar signup com opção de confirmação baseada no checkbox
+      // Configurar opções baseadas no checkbox de confirmação
+      const signUpOptions = {
+        data: {
+          name: formData.name,
+          role: formData.role
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      };
+
+      // Se "ativar sem confirmação" estiver marcado, desabilita a confirmação por email
+      if (formData.activateWithoutConfirmation) {
+        // Usar uma configuração que não requer confirmação por email
+        signUpOptions.emailRedirectTo = undefined;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: formData.role
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          // Se "ativar sem confirmação" estiver marcado, confirma o email automaticamente
-          ...(formData.activateWithoutConfirmation && {
-            email_confirm: true
-          })
-        }
+        options: signUpOptions
       });
 
       if (authError) {
@@ -84,6 +87,24 @@ export const AddUserDialog = () => {
       console.log('Usuário criado no auth:', authData.user?.id);
 
       if (authData.user) {
+        // Se "ativar sem confirmação" estiver marcado, confirmar o email manualmente
+        if (formData.activateWithoutConfirmation && !authData.user.email_confirmed_at) {
+          console.log('Confirmando email automaticamente...');
+          
+          // Usar a API admin para confirmar o email automaticamente
+          const { error: confirmError } = await supabase.auth.admin.updateUserById(
+            authData.user.id,
+            { email_confirm: true }
+          );
+
+          if (confirmError) {
+            console.error('Erro ao confirmar email automaticamente:', confirmError);
+            // Continuar mesmo com erro de confirmação
+          } else {
+            console.log('Email confirmado automaticamente');
+          }
+        }
+
         // Criar perfil na tabela profiles
         const { error: profileError } = await supabase
           .from('profiles')
@@ -185,6 +206,7 @@ export const AddUserDialog = () => {
           <DialogTitle>Adicionar Novo Usuário</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          
           <div>
             <Label htmlFor="name">Nome Completo *</Label>
             <Input
