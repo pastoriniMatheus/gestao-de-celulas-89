@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -58,25 +59,16 @@ export const AddUserDialog = () => {
     try {
       console.log('Criando usuário:', formData.email);
       
-      // Configurar opções baseadas no checkbox de confirmação
-      const signUpOptions = {
-        data: {
-          name: formData.name,
-          role: formData.role
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      };
-
-      // Se "ativar sem confirmação" estiver marcado, desabilita a confirmação por email
-      if (formData.activateWithoutConfirmation) {
-        // Usar uma configuração que não requer confirmação por email
-        signUpOptions.emailRedirectTo = undefined;
-      }
-
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: signUpOptions
+        options: {
+          data: {
+            name: formData.name,
+            role: formData.role
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
 
       if (authError) {
@@ -87,21 +79,42 @@ export const AddUserDialog = () => {
       console.log('Usuário criado no auth:', authData.user?.id);
 
       if (authData.user) {
-        // Se "ativar sem confirmação" estiver marcado, confirmar o email manualmente
-        if (formData.activateWithoutConfirmation && !authData.user.email_confirmed_at) {
+        // Se "ativar sem confirmação" estiver marcado, confirmar o email automaticamente
+        if (formData.activateWithoutConfirmation) {
           console.log('Confirmando email automaticamente...');
           
-          // Usar a API admin para confirmar o email automaticamente
-          const { error: confirmError } = await supabase.auth.admin.updateUserById(
-            authData.user.id,
-            { email_confirm: true }
-          );
+          try {
+            // Usar a API admin para confirmar o email automaticamente
+            const { error: confirmError } = await supabase.auth.admin.updateUserById(
+              authData.user.id,
+              { 
+                email_confirm: true,
+                email_confirmed_at: new Date().toISOString()
+              }
+            );
 
-          if (confirmError) {
-            console.error('Erro ao confirmar email automaticamente:', confirmError);
-            // Continuar mesmo com erro de confirmação
-          } else {
-            console.log('Email confirmado automaticamente');
+            if (confirmError) {
+              console.error('Erro ao confirmar email automaticamente:', confirmError);
+              
+              // Tentativa alternativa usando SQL direto
+              const { error: sqlError } = await supabase
+                .from('auth.users')
+                .update({ 
+                  email_confirmed_at: new Date().toISOString(),
+                  confirmed_at: new Date().toISOString()
+                })
+                .eq('id', authData.user.id);
+
+              if (sqlError) {
+                console.error('Erro ao confirmar por SQL:', sqlError);
+              } else {
+                console.log('Email confirmado via SQL');
+              }
+            } else {
+              console.log('Email confirmado automaticamente');
+            }
+          } catch (confirmError) {
+            console.error('Erro geral na confirmação:', confirmError);
           }
         }
 
@@ -128,7 +141,7 @@ export const AddUserDialog = () => {
           
           // Criar registro de permissões de ministério se necessário
           if (formData.canAccessMinistries || formData.canAccessKids) {
-            const { error: accessError } = await (supabase as any)
+            const { error: accessError } = await supabase
               .from('user_ministry_access')
               .insert([{
                 user_id: authData.user.id,
