@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -88,28 +89,12 @@ export const AddUserDialog = () => {
             const { error: confirmError } = await supabase.auth.admin.updateUserById(
               authData.user.id,
               { 
-                email_confirm: true,
-                email_confirmed_at: new Date().toISOString()
+                email_confirm: true
               }
             );
 
             if (confirmError) {
               console.error('Erro ao confirmar email automaticamente:', confirmError);
-              
-              // Tentativa alternativa usando SQL direto
-              const { error: sqlError } = await supabase
-                .from('auth.users')
-                .update({ 
-                  email_confirmed_at: new Date().toISOString(),
-                  confirmed_at: new Date().toISOString()
-                })
-                .eq('id', authData.user.id);
-
-              if (sqlError) {
-                console.error('Erro ao confirmar por SQL:', sqlError);
-              } else {
-                console.log('Email confirmado via SQL');
-              }
             } else {
               console.log('Email confirmado automaticamente');
             }
@@ -355,3 +340,4 @@ export const AddUserDialog = () => {
     </Dialog>
   );
 };
+
