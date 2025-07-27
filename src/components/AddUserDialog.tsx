@@ -59,15 +59,18 @@ export const AddUserDialog = () => {
     try {
       console.log('Criando usuário:', formData.email);
       
+      // Definir os metadados do usuário com email_verified baseado no checkbox
+      const userMetadata = {
+        name: formData.name,
+        role: formData.role,
+        email_verified: formData.activateWithoutConfirmation
+      };
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          data: {
-            name: formData.name,
-            role: formData.role,
-            email_verified: formData.activateWithoutConfirmation
-          },
+          data: userMetadata,
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
