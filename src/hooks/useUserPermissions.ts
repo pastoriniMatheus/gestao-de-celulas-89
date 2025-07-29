@@ -17,6 +17,11 @@ export const useUserPermissions = () => {
       fetchMinistryAccess();
       fetchUserMinistries();
       checkKidsMinistryMembership();
+    } else {
+      // Resetar estados quando não há usuário
+      setMinistryAccess(null);
+      setUserMinistries([]);
+      setIsKidsMinistryMember(false);
     }
   }, [userProfile?.user_id]);
 
@@ -28,7 +33,7 @@ export const useUserPermissions = () => {
         .from('user_ministry_access')
         .select('*')
         .eq('user_id', userProfile.user_id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Erro ao buscar permissões de ministério:', error);
@@ -48,7 +53,8 @@ export const useUserPermissions = () => {
       const { data, error } = await supabase
         .from('ministries')
         .select('*')
-        .eq('leader_id', userProfile.id);
+        .eq('leader_id', userProfile.id)
+        .eq('active', true);
 
       if (error) {
         console.error('Erro ao buscar ministérios do usuário:', error);
@@ -76,7 +82,6 @@ export const useUserPermissions = () => {
 
       if (memberError) {
         console.error('Erro ao buscar membros de ministério:', memberError);
-        return;
       }
 
       // Verificar se é líder de ministérios Kids ou Jovens
@@ -88,7 +93,6 @@ export const useUserPermissions = () => {
 
       if (leaderError) {
         console.error('Erro ao buscar ministérios liderados:', leaderError);
-        return;
       }
 
       // Verificar se algum dos ministérios é Kids ou Jovens
@@ -113,6 +117,31 @@ export const useUserPermissions = () => {
     }
   };
 
+  // Verificar se o usuário está carregado
+  if (!userProfile) {
+    return {
+      canAccessUserManagement: false,
+      canAccessSettings: false,
+      canAccessEvents: false,
+      canAccessQRCodes: false,
+      canAccessMessaging: false,
+      canAccessContacts: false,
+      canAccessDashboard: false,
+      canAccessCells: false,
+      canAccessPipeline: false,
+      canAccessMinistries: false,
+      canAccessKids: false,
+      canDeleteContacts: false,
+      isLeader: false,
+      isAdmin: false,
+      isUser: false,
+      userProfile: null,
+      ministryAccess: null,
+      userMinistries: [],
+      isKidsMinistryMember: false
+    };
+  }
+
   // Admin tem acesso a tudo
   const isAdmin = userProfile?.role === 'admin';
   const isLeader = userProfile?.role === 'leader';
@@ -133,7 +162,7 @@ export const useUserPermissions = () => {
   const canAccessDashboard = true;
   const canAccessCells = isAdmin || isLeader;
   const canAccessPipeline = isAdmin || isLeader;
-  const canDeleteContacts = isAdmin; // Admin pode deletar contatos
+  const canDeleteContacts = isAdmin; // Apenas admin pode deletar contatos
   
   // Ministérios: Admin tem acesso completo, líderes só aos seus ministérios, usuários só se tiverem permissão
   const canAccessMinistries = isAdmin || 
