@@ -2,7 +2,7 @@
 import { useUserPermissions } from './useUserPermissions';
 
 export const useLeaderPermissions = () => {
-  const { isLeader, isAdmin, isUser, userProfile, ministryAccess } = useUserPermissions();
+  const { isLeader, isAdmin, isUser, userProfile, ministryAccess, canDeleteContacts, isKidsMinistryMember } = useUserPermissions();
 
   const filterCellsForLeader = (cells: any[]) => {
     if (isAdmin) return cells;
@@ -27,7 +27,7 @@ export const useLeaderPermissions = () => {
   const canManageAllCells = isAdmin;
   const canManageAllContacts = isAdmin;
   const canAccessKids = isAdmin || 
-    (isLeader && ministryAccess?.can_access_kids) || 
+    isKidsMinistryMember ||
     (isUser && ministryAccess?.can_access_kids);
 
   return {
@@ -37,10 +37,12 @@ export const useLeaderPermissions = () => {
     canManageAllCells,
     canManageAllContacts,
     canAccessKids,
+    canDeleteContacts, // Incluindo a permissão de deletar contatos
     isLeader,
     isAdmin,
     isUser,
     userProfile,
-    ministryAccess
+    ministryAccess,
+    isKidsMinistryMember
   };
 };
