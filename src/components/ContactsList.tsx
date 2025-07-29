@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Edit, Trash2, Plus, Phone, Calendar, MapPin } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, Phone, Calendar, MapPin, MessageSquare } from 'lucide-react';
 import { useContacts } from '@/hooks/useContacts';
 import { useCells } from '@/hooks/useCells';
 import { useMinistries } from '@/hooks/useMinistries';
@@ -28,6 +28,12 @@ export const ContactsList = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [cellFilter, setCellFilter] = useState('all');
   const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
+  
+  // Estados para os diálogos
+  const [editingContact, setEditingContact] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [notesContact, setNotesContact] = useState<any>(null);
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
 
   // Filtrar contatos baseado nas permissões
   const filteredContacts = filterContactsForLeader(contacts)
@@ -73,6 +79,16 @@ export const ContactsList = () => {
     } finally {
       setDeletingContactId(null);
     }
+  };
+
+  const handleEditContact = (contact: any) => {
+    setEditingContact(contact);
+    setEditDialogOpen(true);
+  };
+
+  const handleShowNotes = (contact: any) => {
+    setNotesContact(contact);
+    setNotesDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -239,8 +255,22 @@ export const ContactsList = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <ContactNotesDialog contact={contact} />
-                        <EditContactDialog contact={contact} />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleShowNotes(contact)}
+                          title="Ver anotações"
+                        >
+                          <MessageSquare className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditContact(contact)}
+                          title="Editar contato"
+                        >
+                          <Edit className="h-4 w-4 text-orange-600" />
+                        </Button>
                         {canDeleteContacts && (
                           <Button
                             size="sm"
@@ -248,6 +278,7 @@ export const ContactsList = () => {
                             onClick={() => handleDeleteContact(contact.id, contact.name)}
                             disabled={deletingContactId === contact.id}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Deletar contato"
                           >
                             {deletingContactId === contact.id ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
@@ -277,6 +308,28 @@ export const ContactsList = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogos */}
+      {editingContact && (
+        <EditContactDialog
+          contact={editingContact}
+          isOpen={editDialogOpen}
+          onClose={() => {
+            setEditDialogOpen(false);
+            setEditingContact(null);
+          }}
+        />
+      )}
+
+      {notesContact && (
+        <ContactNotesDialog
+          isOpen={notesDialogOpen}
+          onOpenChange={setNotesDialogOpen}
+          contactId={notesContact.id}
+          contactName={notesContact.name}
+          cellId={notesContact.cell_id || ''}
+        />
+      )}
     </div>
   );
 };
