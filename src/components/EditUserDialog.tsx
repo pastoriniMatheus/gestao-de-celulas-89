@@ -1,19 +1,25 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, EyeOff, Plus } from 'lucide-react';
+import { Eye, EyeOff, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-export const AddUserDialog = () => {
+interface EditUserDialogProps {
+  user: any;
+  onUserUpdated: () => void;
+}
+
+export const EditUserDialog = ({ user, onUserUpdated }: EditUserDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [ministryAccess, setMinistryAccess] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,19 +31,63 @@ export const AddUserDialog = () => {
     activateWithoutConfirmation: false
   });
 
+  useEffect(() => {
+    if (user && isOpen) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        password: '',
+        confirmPassword: '',
+        role: user.role || 'user',
+        canAccessMinistries: false,
+        canAccessKids: false,
+        activateWithoutConfirmation: false
+      });
+      fetchMinistryAccess();
+    }
+  }, [user, isOpen]);
+
+  const fetchMinistryAccess = async () => {
+    if (!user?.user_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_ministry_access')
+        .select('*')
+        .eq('user_id', user.user_id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao buscar permissões:', error);
+        return;
+      }
+
+      if (data) {
+        setMinistryAccess(data);
+        setFormData(prev => ({
+          ...prev,
+          canAccessMinistries: data.can_access_ministries || false,
+          canAccessKids: data.can_access_kids || false
+        }));
+      }
+    } catch (error) {
+      console.error('Erro ao buscar permissões:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email) {
       toast({
         title: "Erro",
-        description: "Todos os campos são obrigatórios.",
+        description: "Nome e email são obrigatórios.",
         variant: "destructive",
       });
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password && formData.password !== formData.confirmPassword) {
       toast({
         title: "Erro",
         description: "As senhas não coincidem.",
@@ -46,7 +96,7 @@ export const AddUserDialog = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.password && formData.password.length < 6) {
       toast({
         title: "Erro",
         description: "A senha deve ter pelo menos 6 caracteres.",
@@ -57,79 +107,57 @@ export const AddUserDialog = () => {
 
     setLoading(true);
     try {
-      console.log('Criando usuário:', formData.email);
-      
-      const userMetadata = {
-        name: formData.name,
-        role: formData.role,
-        email_verified: formData.activateWithoutConfirmation
-      };
+      // Atualizar perfil na tabela profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          name: formData.name,
+          email: formData.email,
+          role: formData.role
+        })
+        .eq('id', user.id);
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: userMetadata,
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-
-      if (authError) {
-        console.error('Erro auth:', authError);
-        throw authError;
+      if (profileError) {
+        throw profileError;
       }
 
-      console.log('Usuário criado no auth:', authData.user?.id);
-
-      if (authData.user) {
-        // Se "ativar sem confirmação" estiver marcado, confirmar o email automaticamente
-        if (formData.activateWithoutConfirmation) {
-          console.log('Confirmando email automaticamente...');
-          
-          try {
-            const { error: confirmError } = await supabase.auth.admin.updateUserById(
-              authData.user.id,
-              { 
-                email_confirm: true,
-                user_metadata: {
-                  ...userMetadata,
-                  email_verified: true
-                }
-              }
-            );
-
-            if (confirmError) {
-              console.error('Erro ao confirmar email automaticamente:', confirmError);
-            } else {
-              console.log('Email confirmado automaticamente');
-            }
-          } catch (confirmError) {
-            console.error('Erro geral na confirmação:', confirmError);
-          }
-        }
-
-        // Criar perfil na tabela profiles
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            user_id: authData.user.id,
-            name: formData.name,
+      // Atualizar usuário no auth se tiver user_id e senha foi fornecida
+      if (user.user_id && formData.password) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          user.user_id,
+          {
             email: formData.email,
-            role: formData.role,
-            active: true
-          }]);
+            password: formData.password,
+            email_confirm: formData.activateWithoutConfirmation
+          }
+        );
 
-        if (profileError) {
-          console.error('Erro ao criar perfil:', profileError);
-          throw profileError;
+        if (authError) {
+          console.error('Erro ao atualizar usuário no auth:', authError);
         }
+      }
 
-        // Criar registro de permissões de ministério apenas se o usuário for do tipo "user" e tiver permissões selecionadas
-        if (formData.role === 'user' && (formData.canAccessMinistries || formData.canAccessKids)) {
+      // Atualizar permissões de ministério se for usuário
+      if (formData.role === 'user' && user.user_id) {
+        if (ministryAccess) {
+          // Atualizar permissões existentes
+          const { error: accessError } = await supabase
+            .from('user_ministry_access')
+            .update({
+              can_access_ministries: formData.canAccessMinistries,
+              can_access_kids: formData.canAccessKids
+            })
+            .eq('user_id', user.user_id);
+
+          if (accessError) {
+            console.error('Erro ao atualizar permissões:', accessError);
+          }
+        } else {
+          // Criar novas permissões
           const { error: accessError } = await supabase
             .from('user_ministry_access')
             .insert([{
-              user_id: authData.user.id,
+              user_id: user.user_id,
               can_access_ministries: formData.canAccessMinistries,
               can_access_kids: formData.canAccessKids
             }]);
@@ -138,51 +166,31 @@ export const AddUserDialog = () => {
             console.error('Erro ao criar permissões:', accessError);
           }
         }
-        
-        const successMessage = formData.activateWithoutConfirmation 
-          ? "Usuário criado e ativado com sucesso!" 
-          : "Usuário criado com sucesso! Um email de confirmação foi enviado.";
-        
-        toast({
-          title: "Sucesso",
-          description: successMessage,
-        });
+      } else if (formData.role !== 'user' && ministryAccess) {
+        // Remover permissões se não for mais usuário
+        const { error: deleteError } = await supabase
+          .from('user_ministry_access')
+          .delete()
+          .eq('user_id', user.user_id);
+
+        if (deleteError) {
+          console.error('Erro ao remover permissões:', deleteError);
+        }
       }
 
-      setFormData({ 
-        name: '', 
-        email: '', 
-        password: '', 
-        confirmPassword: '', 
-        role: 'user',
-        canAccessMinistries: false,
-        canAccessKids: false,
-        activateWithoutConfirmation: false
+      toast({
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso!",
       });
+
       setIsOpen(false);
-      
-      // Recarregar a página para atualizar a lista
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      onUserUpdated();
       
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error);
-      let errorMessage = "Erro ao criar usuário";
-      
-      if (error.message?.includes('User already registered')) {
-        errorMessage = "Este email já está cadastrado";
-      } else if (error.message?.includes('Invalid email')) {
-        errorMessage = "Email inválido";
-      } else if (error.message?.includes('Password')) {
-        errorMessage = "Senha inválida";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
+      console.error('Erro ao atualizar usuário:', error);
       toast({
         title: "Erro",
-        description: errorMessage,
+        description: `Erro ao atualizar usuário: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -193,14 +201,13 @@ export const AddUserDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Usuário
+        <Button size="sm" variant="outline">
+          <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Adicionar Novo Usuário</DialogTitle>
+          <DialogTitle>Editar Usuário</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           
@@ -228,15 +235,14 @@ export const AddUserDialog = () => {
           </div>
 
           <div>
-            <Label htmlFor="password">Senha *</Label>
+            <Label htmlFor="password">Nova Senha (deixe em branco para manter a atual)</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Mínimo 6 caracteres"
-                required
+                placeholder="Nova senha (opcional)"
               />
               <Button
                 type="button"
@@ -254,17 +260,18 @@ export const AddUserDialog = () => {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-              placeholder="Confirme a senha"
-              required
-            />
-          </div>
+          {formData.password && (
+            <div>
+              <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="Confirme a nova senha"
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="role">Função</Label>
@@ -280,20 +287,22 @@ export const AddUserDialog = () => {
             </Select>
           </div>
 
-          <div className="space-y-3">
-            <Label>Configurações</Label>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="activate-without-confirmation"
-                checked={formData.activateWithoutConfirmation}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, activateWithoutConfirmation: checked as boolean }))}
-              />
-              <Label htmlFor="activate-without-confirmation" className="text-sm font-normal">
-                Ativar sem confirmação por email
-              </Label>
+          {formData.password && (
+            <div className="space-y-3">
+              <Label>Configurações</Label>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="activate-without-confirmation"
+                  checked={formData.activateWithoutConfirmation}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, activateWithoutConfirmation: checked as boolean }))}
+                />
+                <Label htmlFor="activate-without-confirmation" className="text-sm font-normal">
+                  Ativar sem confirmação por email
+                </Label>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Permissões especiais apenas para usuários do tipo "user" */}
           {formData.role === 'user' && (
@@ -334,7 +343,7 @@ export const AddUserDialog = () => {
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Criando...' : 'Criar Usuário'}
+              {loading ? 'Atualizando...' : 'Atualizar Usuário'}
             </Button>
           </div>
         </form>
