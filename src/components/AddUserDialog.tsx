@@ -59,6 +59,7 @@ export const AddUserDialog = () => {
     try {
       console.log('Criando usuário:', formData.email);
       
+      // Definir os metadados do usuário
       const userMetadata = {
         name: formData.name,
         role: formData.role,
@@ -121,32 +122,38 @@ export const AddUserDialog = () => {
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError);
-          throw profileError;
-        }
+          toast({
+            title: "Usuário criado",
+            description: "Usuário criado no sistema de autenticação, mas houve erro ao criar perfil.",
+            variant: "default",
+          });
+        } else {
+          console.log('Perfil criado com sucesso');
+          
+          // Criar registro de permissões de ministério apenas se o usuário for do tipo "user" e tiver permissões selecionadas
+          if (formData.role === 'user' && (formData.canAccessMinistries || formData.canAccessKids)) {
+            const { error: accessError } = await supabase
+              .from('user_ministry_access')
+              .insert([{
+                user_id: authData.user.id,
+                can_access_ministries: formData.canAccessMinistries,
+                can_access_kids: formData.canAccessKids
+              }]);
 
-        // Criar registro de permissões de ministério apenas se o usuário for do tipo "user" e tiver permissões selecionadas
-        if (formData.role === 'user' && (formData.canAccessMinistries || formData.canAccessKids)) {
-          const { error: accessError } = await supabase
-            .from('user_ministry_access')
-            .insert([{
-              user_id: authData.user.id,
-              can_access_ministries: formData.canAccessMinistries,
-              can_access_kids: formData.canAccessKids
-            }]);
-
-          if (accessError) {
-            console.error('Erro ao criar permissões:', accessError);
+            if (accessError) {
+              console.error('Erro ao criar permissões:', accessError);
+            }
           }
+          
+          const successMessage = formData.activateWithoutConfirmation 
+            ? "Usuário criado e ativado com sucesso!" 
+            : "Usuário criado com sucesso! Um email de confirmação foi enviado.";
+          
+          toast({
+            title: "Sucesso",
+            description: successMessage,
+          });
         }
-        
-        const successMessage = formData.activateWithoutConfirmation 
-          ? "Usuário criado e ativado com sucesso!" 
-          : "Usuário criado com sucesso! Um email de confirmação foi enviado.";
-        
-        toast({
-          title: "Sucesso",
-          description: successMessage,
-        });
       }
 
       setFormData({ 

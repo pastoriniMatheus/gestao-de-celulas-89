@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './AuthProvider';
 import { AddUserDialog } from './AddUserDialog';
-import { EditUserDialog } from './EditUserDialog';
 import { ErrorBoundary } from './ErrorBoundary';
 
 interface UserProfile {
@@ -107,6 +105,7 @@ export const UsersManager = () => {
   };
 
   const deleteUser = async (userId: string, userName: string) => {
+    // Confirmação de exclusão
     if (!confirm(`Tem certeza que deseja excluir permanentemente o usuário "${userName}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -116,6 +115,7 @@ export const UsersManager = () => {
     try {
       console.log('Excluindo usuário:', { userId, userName });
       
+      // Buscar o user_id para excluir também do auth
       const user = users.find(u => u.id === userId);
       if (!user) {
         throw new Error('Usuário não encontrado');
@@ -132,6 +132,7 @@ export const UsersManager = () => {
           
           if (authError) {
             console.error('Erro ao excluir usuário do auth:', authError);
+            // Não interromper o processo, continuar com a exclusão do perfil
           } else {
             console.log('Usuário excluído do sistema de autenticação com sucesso');
             deletedFromAuth = true;
@@ -178,6 +179,7 @@ export const UsersManager = () => {
         throw profileDeleteError;
       }
 
+      // Mensagem de sucesso baseada no que foi excluído
       if (deletedFromAuth && deletedFromProfile) {
         toast({
           title: "Sucesso",
@@ -197,6 +199,7 @@ export const UsersManager = () => {
         });
       }
 
+      // Atualizar lista
       fetchUsers();
       
     } catch (error: any) {
@@ -235,6 +238,7 @@ export const UsersManager = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
+  // Verificar se o usuário atual tem permissão para gerenciar usuários
   const canManageUsers = userProfile?.role === 'admin';
 
   if (!canManageUsers) {
@@ -363,7 +367,6 @@ export const UsersManager = () => {
                       <TableCell>{formatDate(user.created_at)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <EditUserDialog user={user} onUserUpdated={fetchUsers} />
                           <Button
                             size="sm"
                             variant="outline"
