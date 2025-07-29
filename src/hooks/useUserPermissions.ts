@@ -29,26 +29,20 @@ export const useUserPermissions = () => {
     if (!userProfile?.user_id) return;
     
     try {
-      console.log('Buscando permissões para user_id:', userProfile.user_id);
-      
       const { data, error } = await supabase
         .from('user_ministry_access')
         .select('*')
         .eq('user_id', userProfile.user_id)
         .maybeSingle();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Erro ao buscar permissões de ministério:', error);
-        // Se der erro de permissão, assumir que não tem acesso especial
-        setMinistryAccess(null);
         return;
       }
 
-      console.log('Permissões encontradas:', data);
       setMinistryAccess(data);
     } catch (error) {
-      console.error('Erro geral ao buscar permissões de ministério:', error);
-      setMinistryAccess(null);
+      console.error('Erro ao buscar permissões de ministério:', error);
     }
   };
 
@@ -64,15 +58,12 @@ export const useUserPermissions = () => {
 
       if (error) {
         console.error('Erro ao buscar ministérios do usuário:', error);
-        setUserMinistries([]);
         return;
       }
 
-      console.log('Ministérios liderados:', data);
       setUserMinistries(data || []);
     } catch (error) {
       console.error('Erro ao buscar ministérios do usuário:', error);
-      setUserMinistries([]);
     }
   };
 
@@ -80,9 +71,7 @@ export const useUserPermissions = () => {
     if (!userProfile?.id) return;
     
     try {
-      console.log('Verificando participação em ministérios Kids para profile_id:', userProfile.id);
-      
-      // Verificar se o usuário é membro de ministérios Kids ou Jovens
+      // Verificar se o usuário é membro ou líder de ministérios Kids ou Jovens
       const { data: memberData, error: memberError } = await supabase
         .from('ministry_members')
         .select(`
@@ -93,8 +82,6 @@ export const useUserPermissions = () => {
 
       if (memberError) {
         console.error('Erro ao buscar membros de ministério:', memberError);
-      } else {
-        console.log('Membros de ministério encontrados:', memberData);
       }
 
       // Verificar se é líder de ministérios Kids ou Jovens
@@ -106,8 +93,6 @@ export const useUserPermissions = () => {
 
       if (leaderError) {
         console.error('Erro ao buscar ministérios liderados:', leaderError);
-      } else {
-        console.log('Ministérios liderados encontrados:', leaderData);
       }
 
       // Verificar se algum dos ministérios é Kids ou Jovens
@@ -125,14 +110,10 @@ export const useUserPermissions = () => {
         )
       ) || false;
 
-      const kidsAccess = isMemberOfKids || isLeaderOfKids;
-      console.log('Acesso ao Kids - Membro:', isMemberOfKids, 'Líder:', isLeaderOfKids, 'Total:', kidsAccess);
-      
-      setIsKidsMinistryMember(kidsAccess);
+      setIsKidsMinistryMember(isMemberOfKids || isLeaderOfKids);
       
     } catch (error) {
       console.error('Erro ao verificar participação em ministérios Kids:', error);
-      setIsKidsMinistryMember(false);
     }
   };
 
@@ -170,7 +151,6 @@ export const useUserPermissions = () => {
   console.log('useUserPermissions - isLeader:', isLeader);
   console.log('useUserPermissions - isUser:', isUser);
   console.log('useUserPermissions - isKidsMinistryMember:', isKidsMinistryMember);
-  console.log('useUserPermissions - ministryAccess:', ministryAccess);
 
   // Permissões específicas baseadas nas regras
   const canAccessUserManagement = isAdmin;
@@ -193,9 +173,6 @@ export const useUserPermissions = () => {
   const canAccessKids = isAdmin || 
     isKidsMinistryMember ||
     (isUser && ministryAccess?.can_access_kids);
-
-  console.log('useUserPermissions - canAccessKids final:', canAccessKids);
-  console.log('useUserPermissions - ministryAccess.can_access_kids:', ministryAccess?.can_access_kids);
 
   const permissions = {
     canAccessUserManagement,
