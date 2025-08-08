@@ -15,7 +15,6 @@ import { AuthCallback } from './pages/AuthCallback';
 import MemberAttendancePage from './pages/MemberAttendancePage';
 import CellAttendancePage from './pages/CellAttendancePage';
 import { QRRedirect } from './pages/QRRedirect';
-import GenealogyPage from './pages/GenealogyPage';
 import KidsPage from './pages/KidsPage';
 import MessagesPage from './pages/MessagesPage';
 import NotificationsPage from "./pages/NotificationsPage";
@@ -60,7 +59,6 @@ const App = () => (
                           <Route path="/pipeline" element={<Index />} />
                           <Route path="/cells" element={<Index />} />
                           <Route path="/ministries" element={<MinistriesPage />} />
-                          <Route path="/genealogia" element={<GenealogyPage />} />
                           <Route path="/kids" element={<KidsPage />} />
                           <Route path="/messages" element={<MessagesPage />} />
                           <Route path="/events" element={<Index />} />

@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, MessageSquare, Settings, Calendar, UserCheck, TreePine, Baby, Heart } from "lucide-react";
+import { Home, Users, Building2, MessageSquare, Settings, Calendar, UserCheck, Baby, Heart } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "react-router-dom";
 import { useLeaderPermissions } from '@/hooks/useLeaderPermissions';
+import { useKidsAccess } from '@/hooks/useKidsAccess';
 
 const adminItems = [
   {
@@ -48,20 +49,6 @@ const adminItems = [
     icon: Heart,
     color: "text-rose-600 hover:text-rose-700",
     bgColor: "hover:bg-rose-50",
-  },
-  {
-    title: "Genealogia da Igreja",
-    url: "/genealogia",
-    icon: TreePine,
-    color: "text-emerald-600 hover:text-emerald-700",
-    bgColor: "hover:bg-emerald-50",
-  },
-  {
-    title: "Ministério Kids & Jovens",
-    url: "/kids",
-    icon: Baby,
-    color: "text-pink-600 hover:text-pink-700",
-    bgColor: "hover:bg-pink-50",
   },
   {
     title: "Mensagens",
@@ -129,27 +116,26 @@ const leaderItems = [
     color: "text-rose-600 hover:text-rose-700",
     bgColor: "hover:bg-rose-50",
   },
-  {
-    title: "Genealogia da Igreja",
-    url: "/genealogia",
-    icon: TreePine,
-    color: "text-emerald-600 hover:text-emerald-700",
-    bgColor: "hover:bg-emerald-50",
-  },
-  {
-    title: "Ministério Kids & Jovens",
-    url: "/kids",
-    icon: Baby,
-    color: "text-pink-600 hover:text-pink-700",
-    bgColor: "hover:bg-pink-50",
-  },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   const { isAdmin, isLeader } = useLeaderPermissions();
+  const { hasKidsAccess } = useKidsAccess();
   
-  const items = isAdmin ? adminItems : (isLeader ? leaderItems : []);
+  let items = isAdmin ? adminItems : (isLeader ? leaderItems : []);
+
+  // Adicionar Kids apenas para quem tem acesso
+  if (hasKidsAccess) {
+    const kidsItem = {
+      title: "Ministério Kids & Jovens",
+      url: "/kids",
+      icon: Baby,
+      color: "text-pink-600 hover:text-pink-700",
+      bgColor: "hover:bg-pink-50",
+    };
+    items = [...items, kidsItem];
+  }
 
   return (
     <Sidebar className="border-r border-gray-200 bg-gradient-to-b from-gray-50 to-white">

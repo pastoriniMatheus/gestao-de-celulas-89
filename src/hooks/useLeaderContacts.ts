@@ -30,46 +30,18 @@ export const useLeaderContacts = () => {
     try {
       setLoading(true);
       
-      if (isLeader && !isAdmin && userProfile?.id) {
-        // Buscar contatos apenas das células do líder
-        const { data: leaderCells } = await supabase
-          .from('cells')
-          .select('id')
-          .eq('leader_id', userProfile.id);
+      // Buscar todos os contatos - o RLS agora cuida das restrições
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (!leaderCells || leaderCells.length === 0) {
-          setContacts([]);
-          return;
-        }
-
-        const cellIds = leaderCells.map(cell => cell.id);
-        
-        const { data, error } = await supabase
-          .from('contacts')
-          .select('*')
-          .in('cell_id', cellIds)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Erro ao buscar contatos do líder:', error);
-          return;
-        }
-
-        setContacts(data || []);
-      } else if (isAdmin) {
-        // Admin vê todos os contatos
-        const { data, error } = await supabase
-          .from('contacts')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Erro ao buscar contatos:', error);
-          return;
-        }
-
-        setContacts(data || []);
+      if (error) {
+        console.error('Erro ao buscar contatos:', error);
+        return;
       }
+
+      setContacts(data || []);
     } catch (error) {
       console.error('Erro ao buscar contatos:', error);
     } finally {
@@ -78,13 +50,13 @@ export const useLeaderContacts = () => {
   };
 
   useEffect(() => {
-    // Aguardar até que as permissões sejam definidas (não undefined)
+    // Aguardar até que as permissões sejam definidas
     if (typeof isLeader === 'boolean' && typeof isAdmin === 'boolean') {
       fetchContacts();
     } else {
       setLoading(false);
     }
-  }, [userProfile?.id, isLeader, isAdmin].filter(dep => dep !== undefined)); // Filtrar undefined das dependências
+  }, [userProfile?.id, isLeader, isAdmin].filter(dep => dep !== undefined));
 
   return {
     contacts,
