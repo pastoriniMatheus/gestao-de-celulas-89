@@ -4,61 +4,81 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/components/AuthProvider";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Header } from "@/components/Header";
 import Index from "./pages/Index";
-import FormPage from "./pages/FormPage";
-import { AuthCallback } from "./pages/AuthCallback";
-import { QRRedirect } from "./pages/QRRedirect";
 import NotFound from "./pages/NotFound";
-import MemberAttendancePage from "./pages/MemberAttendancePage";
-import CellAttendancePage from "./pages/CellAttendancePage";
-import MessagesPage from "./pages/MessagesPage";
-import MinistriesPage from "./pages/MinistriesPage";
-import KidsPage from "./pages/KidsPage";
+import FormPage from "./pages/FormPage";
+import { AuthCallback } from './pages/AuthCallback';
+import MemberAttendancePage from './pages/MemberAttendancePage';
+import CellAttendancePage from './pages/CellAttendancePage';
+import { QRRedirect } from './pages/QRRedirect';
+import GenealogyPage from './pages/GenealogyPage';
+import KidsPage from './pages/KidsPage';
+import MessagesPage from './pages/MessagesPage';
 import NotificationsPage from "./pages/NotificationsPage";
+import MinistriesPage from './pages/MinistriesPage';
+import { AuthProvider } from './components/AuthProvider';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Routes>
-                <Route path="/form" element={<FormPage />} />
-                <Route path="/form/:id" element={<FormPage />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/qr/:token" element={<QRRedirect />} />
-                <Route path="/attendance/member/:token" element={<MemberAttendancePage />} />
-                <Route path="/attendance/cell/:cellId" element={<CellAttendancePage />} />
-                
-                {/* Rotas protegidas */}
-                <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/contacts" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/cells" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/pipeline" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/ministries" element={<ProtectedRoute><MinistriesPage /></ProtectedRoute>} />
-                <Route path="/kids" element={<ProtectedRoute><KidsPage /></ProtectedRoute>} />
-                <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-                <Route path="/events" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/qr-codes" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-            <Toaster />
-            <Sonner />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Rotas públicas */}
+            <Route path="/form/:eventKey?" element={<FormPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/attendance/:attendanceCode" element={<MemberAttendancePage />} />
+            <Route path="/cell-attendance/:cellToken" element={<CellAttendancePage />} />
+            <Route path="/cells/:cellId/attendance" element={<CellAttendancePage />} />
+            <Route path="/qr/:keyword" element={<QRRedirect />} />
+            <Route path="/avisos" element={<NotificationsPage />} />
+
+            {/* Rotas protegidas */}
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <SidebarProvider>
+                  <div className="min-h-screen flex w-full">
+                    <AppSidebar />
+                    <main className="flex-1 flex flex-col">
+                      {/* Header sempre visível */}
+                      <Header />
+                      
+                      {/* Conteúdo das páginas */}
+                      <div className="flex-1 overflow-auto">
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/contacts" element={<Index />} />
+                          <Route path="/pipeline" element={<Index />} />
+                          <Route path="/cells" element={<Index />} />
+                          <Route path="/ministries" element={<MinistriesPage />} />
+                          <Route path="/genealogia" element={<GenealogyPage />} />
+                          <Route path="/kids" element={<KidsPage />} />
+                          <Route path="/messages" element={<MessagesPage />} />
+                          <Route path="/events" element={<Index />} />
+                          <Route path="/users" element={<Index />} />
+                          <Route path="/settings" element={<Index />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </div>
+                    </main>
+                  </div>
+                </SidebarProvider>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

@@ -30,46 +30,61 @@ export const useLeaderContacts = () => {
     try {
       setLoading(true);
       
-      console.log('fetchContacts: Iniciando busca com perfil:', { isAdmin, isLeader, userProfile });
-      
-      // Com as novas políticas RLS, podemos simplesmente fazer a consulta
-      // O banco já vai filtrar automaticamente baseado no role do usuário
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (isLeader && !isAdmin && userProfile?.id) {
+        // Buscar contatos apenas das células do líder
+        const { data: leaderCells } = await supabase
+          .from('cells')
+          .select('id')
+          .eq('leader_id', userProfile.id);
 
-      if (error) {
-        console.error('Erro ao buscar contatos:', error);
-        // Se há erro, pode ser problema de permissão
-        if (error.code === '42501') {
-          console.log('Erro de permissão - usuário pode não ter acesso aos contatos');
+        if (!leaderCells || leaderCells.length === 0) {
           setContacts([]);
+          return;
         }
-        return;
-      }
 
-      console.log('fetchContacts: Contatos encontrados:', data?.length);
-      setContacts(data || []);
-      
+        const cellIds = leaderCells.map(cell => cell.id);
+        
+        const { data, error } = await supabase
+          .from('contacts')
+          .select('*')
+          .in('cell_id', cellIds)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao buscar contatos do líder:', error);
+          return;
+        }
+
+        setContacts(data || []);
+      } else if (isAdmin) {
+        // Admin vê todos os contatos
+        const { data, error } = await supabase
+          .from('contacts')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao buscar contatos:', error);
+          return;
+        }
+
+        setContacts(data || []);
+      }
     } catch (error) {
-      console.error('Erro geral ao buscar contatos:', error);
-      setContacts([]);
+      console.error('Erro ao buscar contatos:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Só buscar se o usuário tem permissão para acessar contatos
-    if (userProfile && (isAdmin || isLeader)) {
+    // Aguardar até que as permissões sejam definidas (não undefined)
+    if (typeof isLeader === 'boolean' && typeof isAdmin === 'boolean') {
       fetchContacts();
     } else {
-      console.log('useLeaderContacts: Usuário não tem permissão para ver contatos');
-      setContacts([]);
       setLoading(false);
     }
-  }, [userProfile?.id, isLeader, isAdmin]);
+  }, [userProfile?.id, isLeader, isAdmin].filter(dep => dep !== undefined)); // Filtrar undefined das dependências
 
   return {
     contacts,
