@@ -8,8 +8,8 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import FormPage from "./pages/FormPage";
-import AuthCallback from "./pages/AuthCallback";
-import QRRedirect from "./pages/QRRedirect";
+import { AuthCallback } from "./pages/AuthCallback";
+import { QRRedirect } from "./pages/QRRedirect";
 import NotFound from "./pages/NotFound";
 import MemberAttendancePage from "./pages/MemberAttendancePage";
 import CellAttendancePage from "./pages/CellAttendancePage";
@@ -17,8 +17,6 @@ import MessagesPage from "./pages/MessagesPage";
 import MinistriesPage from "./pages/MinistriesPage";
 import KidsPage from "./pages/KidsPage";
 import NotificationsPage from "./pages/NotificationsPage";
-// REMOVER importação da página de Genealogia
-// import GenealogyPage from "./pages/GenealogyPage";
 
 const queryClient = new QueryClient();
 
@@ -50,9 +48,6 @@ function App() {
                 <Route path="/users" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-                
-                {/* REMOVER rota da genealogia completamente */}
-                {/* <Route path="/genealogy" element={<ProtectedRoute><GenealogyPage /></ProtectedRoute>} /> */}
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
