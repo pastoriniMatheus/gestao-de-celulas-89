@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,10 +19,11 @@ export const KanbanPipeline = () => {
   
   // Usar hook apropriado baseado nas permissões
   const { contacts: allContacts, loading: allContactsLoading, updateContact } = isAdmin ? useContacts() : { contacts: [], loading: false, updateContact: () => {} };
-  const { contacts: leaderContacts, loading: leaderContactsLoading } = useLeaderContacts();
+  const { contacts: leaderContacts, loading: leaderContactsLoading, updateContact: updateLeaderContact } = useLeaderContacts();
   
   const contacts = isAdmin ? allContacts : leaderContacts;
   const contactsLoading = isAdmin ? allContactsLoading : leaderContactsLoading;
+  const contactUpdateFunction = isAdmin ? updateContact : updateLeaderContact;
   
   const { cells } = useCells();
   
@@ -44,7 +44,7 @@ export const KanbanPipeline = () => {
   });
 
   const handleDragEnd = async (result: any) => {
-    if (!result.destination || !isAdmin) return;
+    if (!result.destination) return;
 
     const { source, destination, draggableId } = result;
     
@@ -52,7 +52,8 @@ export const KanbanPipeline = () => {
     if (source.droppableId === destination.droppableId) return;
 
     try {
-      await updateContact(draggableId, { pipeline_stage_id: destination.droppableId });
+      console.log('Movendo contato:', draggableId, 'para estágio:', destination.droppableId);
+      await contactUpdateFunction(draggableId, { pipeline_stage_id: destination.droppableId });
     } catch (error) {
       console.error('Erro ao mover contato:', error);
     }
@@ -164,7 +165,7 @@ export const KanbanPipeline = () => {
                         </CardTitle>
                       </CardHeader>
                       
-                      <Droppable droppableId={stage.id} isDropDisabled={!isAdmin}>
+                      <Droppable droppableId={stage.id}>
                         {(provided, snapshot) => (
                           <CardContent 
                             {...provided.droppableProps}
@@ -185,16 +186,15 @@ export const KanbanPipeline = () => {
                                     key={contact.id}
                                     draggableId={contact.id}
                                     index={index}
-                                    isDragDisabled={!isAdmin}
                                   >
                                     {(provided, snapshot) => (
                                       <Card 
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
-                                        className={`border-l-4 transition-all duration-200 ${
+                                        className={`border-l-4 transition-all duration-200 cursor-pointer ${
                                           snapshot.isDragging ? 'shadow-lg rotate-1 scale-105' : 'hover:shadow-md'
-                                        } ${!isAdmin ? 'cursor-pointer' : 'cursor-grab'} active:cursor-grabbing`}
+                                        }`}
                                         style={{ 
                                           borderLeftColor: stage.color,
                                           ...provided.draggableProps.style

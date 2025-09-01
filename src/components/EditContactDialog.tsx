@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCells } from '@/hooks/useCells';
 import { useCities } from '@/hooks/useCities';
 import { useContacts } from '@/hooks/useContacts';
+import { useLeaderContacts } from '@/hooks/useLeaderContacts';
 import { useMinistries } from '@/hooks/useMinistries';
 import { useNeighborhoodsByCity } from '@/hooks/useNeighborhoodsByCity';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
@@ -32,10 +33,14 @@ export const EditContactDialog = ({
 }: EditContactDialogProps) => {
   const { cells } = useCells();
   const { cities } = useCities();
-  const { contacts, updateContact } = useContacts();
+  const { updateContact: updateAdminContact } = useContacts();
+  const { updateContact: updateLeaderContact } = useLeaderContacts();
   const { ministries } = useMinistries();
   const { toast } = useToast();
   const { isAdmin } = useUserPermissions();
+
+  // Usar a função de atualização apropriada baseada nas permissões
+  const updateContact = isAdmin ? updateAdminContact : updateLeaderContact;
 
   // Buscar líderes (profiles) para o campo "Indicado por"
   const { data: profiles = [] } = useQuery({
@@ -78,10 +83,25 @@ export const EditContactDialog = ({
     }
   });
 
+  // Buscar todos os contatos para o campo "Indicado por"
+  const { data: allContacts = [] } = useQuery({
+    queryKey: ['all-contacts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Estado do formulário com valores padrão
   const [formData, setFormData] = useState({
     name: '',
     whatsapp: '',
+    email: '',
+    address: '',
     neighborhood: '',
     city_id: '',
     cell_id: '',
@@ -107,29 +127,6 @@ export const EditContactDialog = ({
     return neighborhood ? neighborhood.city_id : '';
   }, [allNeighborhoods]);
 
-  // Resetar formulário quando o dialog for fechado
-  const resetForm = useCallback(() => {
-    console.log('EditContactDialog: Resetando formulário');
-    setFormData({
-      name: '',
-      whatsapp: '',
-      neighborhood: '',
-      city_id: '',
-      cell_id: '',
-      ministry_id: '',
-      status: 'pending',
-      encounter_with_god: false,
-      baptized: false,
-      pipeline_stage_id: '',
-      age: null,
-      birth_date: '',
-      referred_by: '',
-      photo_url: '',
-      founder: false,
-      leader_id: ''
-    });
-  }, []);
-
   // Carregar dados do contato sempre que o dialog abrir com um novo contato
   const loadContactData = useCallback(() => {
     if (!contact || !isOpen) {
@@ -137,7 +134,7 @@ export const EditContactDialog = ({
       return;
     }
 
-    console.log('EditContactDialog: Carregando dados do contato', contact.id, contact.name);
+    console.log('EditContactDialog: Carregando dados completos do contato:', contact);
     
     // Determinar city_id - primeiro tenta usar o city_id do contato, senão mapeia pelo bairro
     let cityId = contact.city_id || '';
@@ -146,10 +143,12 @@ export const EditContactDialog = ({
       console.log('EditContactDialog: Cidade mapeada pelo bairro:', { neighborhood: contact.neighborhood, cityId });
     }
     
-    // Carregar TODOS os dados do contato
+    // Carregar TODOS os dados do contato, garantindo que todos os campos sejam carregados
     const newFormData = {
       name: contact.name || '',
       whatsapp: contact.whatsapp || '',
+      email: contact.email || '',
+      address: contact.address || '',
       neighborhood: contact.neighborhood || '',
       city_id: cityId,
       cell_id: contact.cell_id || '',
@@ -166,42 +165,42 @@ export const EditContactDialog = ({
       leader_id: contact.leader_id || ''
     };
 
-    console.log('EditContactDialog: Carregando dados:', newFormData);
+    console.log('EditContactDialog: Dados completos carregados:', newFormData);
     setFormData(newFormData);
   }, [contact, isOpen, allNeighborhoods, findCityByNeighborhood]);
 
-  // Effect para gerenciar abertura/fechamento do dialog
-  useEffect(() => {
-    console.log('EditContactDialog: Effect principal - isOpen:', isOpen, 'contactId:', contact?.id);
-    
-    if (!isOpen) {
-      // Dialog fechado - resetar formulário
-      resetForm();
-      return;
-    }
-
-    if (!contact) {
-      console.log('EditContactDialog: Sem contato para carregar');
-      return;
-    }
-
-    // Dialog aberto com contato - aguardar dados necessários carregarem
-    if (allNeighborhoods.length === 0) {
-      console.log('EditContactDialog: Aguardando neighborhoods carregarem...');
-      return;
-    }
-
-    // Carregar dados do contato
-    loadContactData();
-  }, [isOpen, contact, allNeighborhoods.length, loadContactData, resetForm]);
-
-  // Effect adicional para garantir que os dados sejam carregados quando neighborhoods chegarem
+  // Effect para carregar dados quando dialog abrir
   useEffect(() => {
     if (isOpen && contact && allNeighborhoods.length > 0) {
-      console.log('EditContactDialog: Neighborhoods carregados, recarregando dados do contato');
       loadContactData();
     }
-  }, [allNeighborhoods.length, isOpen, contact, loadContactData]);
+  }, [isOpen, contact, allNeighborhoods.length, loadContactData]);
+
+  // Resetar formulário quando dialog fechar
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: '',
+        whatsapp: '',
+        email: '',
+        address: '',
+        neighborhood: '',
+        city_id: '',
+        cell_id: '',
+        ministry_id: '',
+        status: 'pending',
+        encounter_with_god: false,
+        baptized: false,
+        pipeline_stage_id: '',
+        age: null,
+        birth_date: '',
+        referred_by: '',
+        photo_url: '',
+        founder: false,
+        leader_id: ''
+      });
+    }
+  }, [isOpen]);
 
   const handlePhotoChange = (photoUrl: string | null) => {
     setFormData(prev => ({ ...prev, photo_url: photoUrl || '' }));
@@ -250,6 +249,8 @@ export const EditContactDialog = ({
         pipeline_stage_id: formData.pipeline_stage_id === 'no-stage' || !formData.pipeline_stage_id ? null : formData.pipeline_stage_id,
         referred_by: formData.referred_by === 'no-referral' || !formData.referred_by ? null : formData.referred_by,
         leader_id: formData.leader_id === 'no-leader' || !formData.leader_id ? null : formData.leader_id,
+        email: formData.email || null,
+        address: formData.address || null,
       };
 
       // Se não for admin, manter os valores originais para célula e líder
@@ -287,7 +288,7 @@ export const EditContactDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Membro</DialogTitle>
+          <DialogTitle>Editar Contato</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -323,11 +324,29 @@ export const EditContactDialog = ({
             </div>
 
             <div>
+              <Label htmlFor="edit-email">E-mail</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-address">Endereço</Label>
+              <Input
+                id="edit-address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+
+            <div>
               <Label htmlFor="edit-city">Cidade</Label>
               <Select 
                 value={formData.city_id || 'no-city'} 
                 onValueChange={(value) => {
-                  console.log('EditContactDialog: Mudando cidade para:', value);
                   setFormData(prev => ({ 
                     ...prev, 
                     city_id: value === 'no-city' ? '' : value,
@@ -342,7 +361,7 @@ export const EditContactDialog = ({
                   <SelectItem value="no-city">Nenhuma cidade</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city.id} value={city.id}>
-                      {city.name}
+                      {city.name} - {city.state}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -355,7 +374,6 @@ export const EditContactDialog = ({
                 <Select 
                   value={formData.neighborhood || 'no-neighborhood'} 
                   onValueChange={(value) => {
-                    console.log('EditContactDialog: Mudando bairro para:', value);
                     setFormData(prev => ({ 
                       ...prev, 
                       neighborhood: value === 'no-neighborhood' ? '' : value 
@@ -379,7 +397,6 @@ export const EditContactDialog = ({
                   id="edit-neighborhood"
                   value={formData.neighborhood}
                   onChange={(e) => {
-                    console.log('EditContactDialog: Digitando bairro:', e.target.value);
                     setFormData(prev => ({ ...prev, neighborhood: e.target.value }));
                   }}
                   placeholder="Digite o nome do bairro"
@@ -425,6 +442,26 @@ export const EditContactDialog = ({
               <Label htmlFor="edit-founder">Fundador</Label>
             </div>
 
+            {/* Campo Status */}
+            <div>
+              <Label htmlFor="edit-status">Status</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value) => {
+                  setFormData(prev => ({ ...prev, status: value }));
+                }}
+              >
+                <SelectTrigger id="edit-status">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="visitor">Visitante</SelectItem>
+                  <SelectItem value="member">Membro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Campo Líder Responsável - APENAS ADMIN pode ver e editar */}
             {isAdmin && (
               <div>
@@ -432,7 +469,6 @@ export const EditContactDialog = ({
                 <Select 
                   value={formData.leader_id || 'no-leader'} 
                   onValueChange={(value) => {
-                    console.log('EditContactDialog: Mudando líder para:', value);
                     setFormData(prev => ({ 
                       ...prev, 
                       leader_id: value === 'no-leader' ? '' : value 
@@ -461,7 +497,6 @@ export const EditContactDialog = ({
                 <Select 
                   value={formData.cell_id || 'no-cell'} 
                   onValueChange={(value) => {
-                    console.log('EditContactDialog: Mudando célula para:', value);
                     setFormData(prev => ({ 
                       ...prev, 
                       cell_id: value === 'no-cell' ? '' : value 
@@ -488,7 +523,6 @@ export const EditContactDialog = ({
               <Select 
                 value={formData.referred_by || 'no-referral'} 
                 onValueChange={(value) => {
-                  console.log('EditContactDialog: Mudando indicação para:', value);
                   setFormData(prev => ({ 
                     ...prev, 
                     referred_by: value === 'no-referral' ? '' : value 
@@ -500,7 +534,7 @@ export const EditContactDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="no-referral">Nenhuma indicação</SelectItem>
-                  {contacts.map((contact) => (
+                  {allContacts.map((contact) => (
                     <SelectItem key={contact.id} value={contact.id}>
                       {contact.name}
                     </SelectItem>
@@ -519,7 +553,6 @@ export const EditContactDialog = ({
               <Select 
                 value={formData.pipeline_stage_id || 'no-stage'} 
                 onValueChange={(value) => {
-                  console.log('EditContactDialog: Mudando estágio para:', value);
                   setFormData(prev => ({ 
                     ...prev, 
                     pipeline_stage_id: value === 'no-stage' ? '' : value 
