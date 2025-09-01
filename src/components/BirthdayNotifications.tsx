@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Bell, X, Users, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -101,7 +100,10 @@ export const BirthdayNotifications = () => {
                             </Badge>
                           </div>
                           <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-red-600 font-medium mb-2`}>
-                            Aniversário hoje{birthday.age !== null && birthday.age >= 0 ? ` - ${birthday.age} anos` : ''}
+                            {birthday.age !== null && birthday.age >= 0 ? 
+                              `Completando ${birthday.age} anos hoje` : 
+                              'Aniversário hoje'
+                            }
                           </p>
                           <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
                             {birthday.whatsapp ? 
