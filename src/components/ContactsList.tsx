@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Users, Phone, MapPin, Home, Search, Filter, Trash2, Edit, Calendar } fr
 import { useLeaderContacts } from '@/hooks/useLeaderContacts';
 import { useLeaderPermissions } from '@/hooks/useLeaderPermissions';
 import { useCells } from '@/hooks/useCells';
+import { calculateAge, formatBirthDate } from '@/utils/dateUtils';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -53,34 +55,6 @@ export const ContactsList = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const formatBirthDate = (birthDate: string) => {
-    if (!birthDate) return null;
-    // Fix: Create date without timezone issues by using local date
-    const dateParts = birthDate.split('-');
-    const year = parseInt(dateParts[0]);
-    const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
-    const day = parseInt(dateParts[2]);
-    const localDate = new Date(year, month, day);
-    return localDate.toLocaleDateString('pt-BR');
-  };
-
-  const calculateAge = (birthDate: string) => {
-    if (!birthDate) return null;
-    // Fix: Create date without timezone issues
-    const dateParts = birthDate.split('-');
-    const year = parseInt(dateParts[0]);
-    const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
-    const day = parseInt(dateParts[2]);
-    const birth = new Date(year, month, day);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -101,8 +75,6 @@ export const ContactsList = () => {
     const cell = cells.find(c => c.id === cellId);
     return cell ? cell.name : 'Célula não encontrada';
   };
-
-  // Função para exclusão - removida pois não temos mais deleteContact hook
 
   if (loading) {
     return (
@@ -211,107 +183,112 @@ export const ContactsList = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContacts.map((contact) => (
-              <Card key={contact.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold truncate">{contact.name}</h3>
-                      <div className="flex gap-2 items-center">
-                        {getStatusBadge(contact.status)}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-blue-500 hover:bg-blue-100"
-                          title="Editar contato"
-                          aria-label="Editar contato"
-                          onClick={() => setContactToEdit(contact)}
-                        >
-                          <Edit />
-                        </Button>
-                        {/* Botão de Deletar - apenas para admin */}
-                        {canManageAllContacts && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-red-500 hover:bg-red-100"
-                                title="Deletar contato"
-                                aria-label="Deletar contato"
-                                onClick={() => setContactToDelete({ id: contact.id, name: contact.name })}
-                              >
-                                <Trash2 />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogTitle>Excluir contato</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o contato <span className="font-bold">{contact.name}</span>?
-                                Esta ação não poderá ser desfeita.
-                              </AlertDialogDescription>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setContactToDelete(null)}>
-                                  Cancelar
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => setContactToDelete(null)}
-                                  disabled={isDeleting}
+            {filteredContacts.map((contact) => {
+              const age = calculateAge(contact.birth_date);
+              const formattedBirthDate = formatBirthDate(contact.birth_date);
+              
+              return (
+                <Card key={contact.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold truncate">{contact.name}</h3>
+                        <div className="flex gap-2 items-center">
+                          {getStatusBadge(contact.status)}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-blue-500 hover:bg-blue-100"
+                            title="Editar contato"
+                            aria-label="Editar contato"
+                            onClick={() => setContactToEdit(contact)}
+                          >
+                            <Edit />
+                          </Button>
+                          {/* Botão de Deletar - apenas para admin */}
+                          {canManageAllContacts && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-500 hover:bg-red-100"
+                                  title="Deletar contato"
+                                  aria-label="Deletar contato"
+                                  onClick={() => setContactToDelete({ id: contact.id, name: contact.name })}
                                 >
-                                  Funcionalidade removida
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                  <Trash2 />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogTitle>Excluir contato</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o contato <span className="font-bold">{contact.name}</span>?
+                                  Esta ação não poderá ser desfeita.
+                                </AlertDialogDescription>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel onClick={() => setContactToDelete(null)}>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => setContactToDelete(null)}
+                                    disabled={isDeleting}
+                                  >
+                                    Funcionalidade removida
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 text-sm text-gray-600">
+                        {contact.attendance_code && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-gray-700">Código:</span>
+                            <span className="tracking-wider">{contact.attendance_code}</span>
+                          </div>
+                        )}
+                        {contact.whatsapp && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            <span>{contact.whatsapp}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{contact.neighborhood}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Home className="h-4 w-4" />
+                          <span>{getCellName(contact.cell_id)}</span>
+                        </div>
+
+                        {contact.birth_date && formattedBirthDate && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              {formattedBirthDate}
+                              {age !== null && age >= 0 && ` (${age} anos)`}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="text-xs text-gray-500">
+                          Cadastrado: {formatDate(contact.created_at)}
+                        </div>
+                        {contact.encounter_with_god && (
+                          <div className="text-xs text-green-700 font-semibold">Já fez Encontro com Deus</div>
                         )}
                       </div>
                     </div>
-
-                    <div className="space-y-2 text-sm text-gray-600">
-                      {contact.attendance_code && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-gray-700">Código:</span>
-                          <span className="tracking-wider">{contact.attendance_code}</span>
-                        </div>
-                      )}
-                      {contact.whatsapp && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{contact.whatsapp}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{contact.neighborhood}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Home className="h-4 w-4" />
-                        <span>{getCellName(contact.cell_id)}</span>
-                      </div>
-
-                      {contact.birth_date && (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {formatBirthDate(contact.birth_date)} 
-                            {calculateAge(contact.birth_date) && ` (${calculateAge(contact.birth_date)} anos)`}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="text-xs text-gray-500">
-                        Cadastrado: {formatDate(contact.created_at)}
-                      </div>
-                      {contact.encounter_with_god && (
-                        <div className="text-xs text-green-700 font-semibold">Já fez Encontro com Deus</div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
