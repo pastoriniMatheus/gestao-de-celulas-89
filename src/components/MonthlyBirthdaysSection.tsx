@@ -121,7 +121,7 @@ export const MonthlyBirthdaysSection = () => {
                               {formatBirthDate(contact.birth_date, contact.day)}
                             </p>
                             <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
-                              {contact.age !== null ? `${contact.age} anos` : 'Idade não calculada'}
+                              {contact.age !== null && contact.age >= 0 ? `${contact.age} anos` : 'Idade não calculada'}
                             </p>
                           </div>
                           <Button

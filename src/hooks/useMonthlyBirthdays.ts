@@ -11,6 +11,28 @@ interface MonthlyBirthdayContact {
   day: number;
 }
 
+// Função utilitária para calcular idade corretamente
+const calculateAge = (birthDate: string): number | null => {
+  if (!birthDate) return null;
+  
+  try {
+    const birth = new Date(birthDate + 'T00:00:00'); // Adicionar hora para evitar problemas de timezone
+    const today = new Date();
+    
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
+  } catch (error) {
+    console.error('Erro ao calcular idade:', error);
+    return null;
+  }
+};
+
 export const useMonthlyBirthdays = () => {
   const [monthlyBirthdays, setMonthlyBirthdays] = useState<MonthlyBirthdayContact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +40,6 @@ export const useMonthlyBirthdays = () => {
   const fetchMonthlyBirthdays = async () => {
     try {
       const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
       
       const { data, error } = await supabase
         .from('contacts')
@@ -42,18 +63,9 @@ export const useMonthlyBirthdays = () => {
           const birthDate = new Date(contact.birth_date + 'T00:00:00');
           const day = birthDate.getDate();
           
-          // Calcular idade corretamente
-          let age = currentYear - birthDate.getFullYear();
-          const today = new Date();
-          const thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
-          
-          if (today < thisYearBirthday) {
-            age--;
-          }
-          
           return {
             ...contact,
-            age,
+            age: calculateAge(contact.birth_date),
             day
           };
         })

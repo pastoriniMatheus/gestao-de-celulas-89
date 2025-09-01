@@ -101,7 +101,7 @@ export const BirthdayNotifications = () => {
                             </Badge>
                           </div>
                           <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-red-600 font-medium mb-2`}>
-                            Aniversário hoje{birthday.age ? ` - ${birthday.age} anos` : ''}
+                            Aniversário hoje{birthday.age !== null && birthday.age >= 0 ? ` - ${birthday.age} anos` : ''}
                           </p>
                           <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
                             {birthday.whatsapp ? 
