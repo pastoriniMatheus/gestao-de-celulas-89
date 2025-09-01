@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { calculateAge } from '@/utils/dateUtils';
+import { calculateAgeOnBirthday } from '@/utils/dateUtils';
 
 interface BirthdayContact {
   contact_id: string;
@@ -25,13 +25,13 @@ export const useBirthdayNotifications = () => {
         return;
       }
 
-      // Recalcular idade para cada contato usando função centralizada
+      // Calcular idade que está fazendo no aniversário para cada contato
       const birthdaysWithCorrectAge = (data || []).map(birthday => ({
         ...birthday,
-        age: calculateAge(birthday.birth_date)
+        age: calculateAgeOnBirthday(birthday.birth_date)
       }));
 
-      console.log('Aniversariantes hoje com idade corrigida:', birthdaysWithCorrectAge);
+      console.log('Aniversariantes hoje com idade no aniversário:', birthdaysWithCorrectAge);
       setTodayBirthdays(birthdaysWithCorrectAge);
     } catch (error) {
       console.error('Erro ao buscar aniversariantes:', error);

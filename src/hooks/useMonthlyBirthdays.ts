@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateAge } from '@/utils/dateUtils';
+import { calculateAgeOnBirthday, isBirthdayToday } from '@/utils/dateUtils';
 
 interface MonthlyBirthdayContact {
   id: string;
@@ -10,6 +10,7 @@ interface MonthlyBirthdayContact {
   whatsapp: string | null;
   age: number | null;
   day: number;
+  isBirthdayToday: boolean;
 }
 
 export const useMonthlyBirthdays = () => {
@@ -45,13 +46,14 @@ export const useMonthlyBirthdays = () => {
           
           return {
             ...contact,
-            age: calculateAge(contact.birth_date),
-            day
+            age: calculateAgeOnBirthday(contact.birth_date),
+            day,
+            isBirthdayToday: isBirthdayToday(contact.birth_date)
           };
         })
         .sort((a, b) => a.day - b.day) || [];
 
-      console.log('Aniversariantes do mês com idade corrigida:', monthBirthdays);
+      console.log('Aniversariantes do mês com idade no aniversário:', monthBirthdays);
       setMonthlyBirthdays(monthBirthdays);
     } catch (error) {
       console.error('Erro ao buscar aniversariantes do mês:', error);
