@@ -10,6 +10,8 @@ import { useLeaderContacts } from '@/hooks/useLeaderContacts';
 import { useLeaderPermissions } from '@/hooks/useLeaderPermissions';
 import { useCells } from '@/hooks/useCells';
 import { calculateAge, formatBirthDate } from '@/utils/dateUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -36,6 +38,40 @@ export const ContactsList = () => {
 
   // Novo estado para o contato sendo editado
   const [contactToEdit, setContactToEdit] = useState(null);
+  
+  const { toast } = useToast();
+
+  // Função para deletar contato
+  const handleDeleteContact = async () => {
+    if (!contactToDelete || !isAdmin) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('id', contactToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Contato excluído",
+        description: `${contactToDelete.name} foi removido com sucesso.`,
+      });
+
+      await fetchContacts();
+      setContactToDelete(null);
+    } catch (error) {
+      console.error('Erro ao deletar contato:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o contato. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Filtrar contatos
   const filteredContacts = contacts.filter(contact => {
@@ -231,10 +267,11 @@ export const ContactsList = () => {
                                     Cancelar
                                   </AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => setContactToDelete(null)}
+                                    onClick={handleDeleteContact}
                                     disabled={isDeleting}
+                                    className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                                   >
-                                    Funcionalidade removida
+                                    {isDeleting ? 'Excluindo...' : 'Excluir'}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>

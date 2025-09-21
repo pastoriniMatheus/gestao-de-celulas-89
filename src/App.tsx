@@ -19,6 +19,7 @@ import KidsPage from './pages/KidsPage';
 import MessagesPage from './pages/MessagesPage';
 import NotificationsPage from "./pages/NotificationsPage";
 import MinistriesPage from './pages/MinistriesPage';
+import { ReportsPage } from './components/ReportsPage';
 import { AuthProvider } from './components/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -63,6 +64,7 @@ const App = () => (
                           <Route path="/messages" element={<MessagesPage />} />
                           <Route path="/events" element={<Index />} />
                           <Route path="/users" element={<Index />} />
+                          <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/settings" element={<Index />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>

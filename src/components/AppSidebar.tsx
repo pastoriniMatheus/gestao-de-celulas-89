@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, MessageSquare, Settings, Calendar, UserCheck, Baby, Heart } from "lucide-react";
+import { Home, Users, Building2, MessageSquare, Settings, Calendar, UserCheck, Baby, Heart, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -70,6 +70,13 @@ const adminItems = [
     icon: Users,
     color: "text-teal-600 hover:text-teal-700",
     bgColor: "hover:bg-teal-50",
+  },
+  {
+    title: "Relatórios",
+    url: "/reports",
+    icon: BarChart3,
+    color: "text-emerald-600 hover:text-emerald-700",
+    bgColor: "hover:bg-emerald-50",
   },
   {
     title: "Configurações",

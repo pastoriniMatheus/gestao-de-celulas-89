@@ -98,7 +98,12 @@ export const useContacts = () => {
     }
   };
 
-  const addContact = async (contactData: Omit<Contact, 'id' | 'created_at' | 'updated_at'>) => {
+  const addContact = async (contactData: Omit<Contact, 'id' | 'created_at' | 'updated_at'>, entryInfo?: {
+    entry_type: 'qr_form' | 'event_form' | 'manual_admin' | 'manual_leader';
+    source_info?: any;
+    ip_address?: string;
+    user_agent?: string;
+  }) => {
     try {
       console.log('useContacts: Criando contato com dados:', contactData);
       
@@ -121,6 +126,22 @@ export const useContacts = () => {
       if (error) {
         console.error('Erro ao criar contato:', error);
         throw error;
+      }
+
+      // Logar entrada de contato se informações foram fornecidas
+      if (entryInfo) {
+        try {
+          await supabase.from('contact_entries').insert({
+            contact_id: data.id,
+            entry_type: entryInfo.entry_type,
+            source_info: entryInfo.source_info || {},
+            ip_address: entryInfo.ip_address || null,
+            user_agent: entryInfo.user_agent || null
+          });
+        } catch (logError) {
+          console.error('Erro ao logar entrada do contato:', logError);
+          // Não falhar o processo principal se o log falhar
+        }
       }
 
       toast({

@@ -72,6 +72,24 @@ export const useLeaderContacts = () => {
         throw error;
       }
 
+      // Log entry if this is a significant change (like assigning to cell for first time)
+      if (updates.cell_id && !contacts.find(c => c.id === id)?.cell_id) {
+        try {
+          await supabase.from('contact_entries').insert({
+            contact_id: id,
+            entry_type: 'manual_leader',
+            source_info: {
+              assigned_to_cell: updates.cell_id,
+              created_via: 'leader_assignment',
+              action: 'cell_assignment'
+            },
+            user_agent: navigator.userAgent
+          });
+        } catch (logError) {
+          console.error('Erro ao logar entrada do contato:', logError);
+        }
+      }
+
       console.log('useLeaderContacts: Contato atualizado com sucesso:', data);
       
       // Atualizar o estado local

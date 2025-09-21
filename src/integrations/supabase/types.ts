@@ -380,6 +380,54 @@ export type Database = {
           },
         ]
       }
+      contact_entries: {
+        Row: {
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          entry_type: string
+          id: string
+          ip_address: unknown | null
+          source_info: Json | null
+          user_agent: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          entry_type: string
+          id?: string
+          ip_address?: unknown | null
+          source_info?: Json | null
+          user_agent?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          entry_type?: string
+          id?: string
+          ip_address?: unknown | null
+          source_info?: Json | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_entries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_notes: {
         Row: {
           cell_id: string

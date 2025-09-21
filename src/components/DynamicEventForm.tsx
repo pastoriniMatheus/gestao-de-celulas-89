@@ -266,11 +266,49 @@ export const DynamicEventForm = () => {
 
       console.log('DynamicEventForm: Dados do contato:', contactData);
 
-      const { error } = await supabase
+      // Determinar tipo de entrada
+      let entryType: 'qr_form' | 'event_form' = 'qr_form';
+      let sourceInfo: any = {};
+
+      if (eventId && eventInfo) {
+        entryType = 'event_form';
+        sourceInfo = {
+          event_id: eventId,
+          event_name: eventInfo.name
+        };
+      } else if (cod && qrInfo) {
+        entryType = 'qr_form';
+        sourceInfo = {
+          qr_code_id: qrInfo.id,
+          qr_keyword: cod,
+          qr_title: qrInfo.title
+        };
+      }
+
+      // Inserir contato com informações de entrada
+      const { data: newContact, error } = await supabase
         .from('contacts')
-        .insert([contactData]);
+        .insert([contactData])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Logar entrada de contato
+      try {
+        const entryData = {
+          contact_id: newContact.id,
+          entry_type: entryType,
+          source_info: sourceInfo,
+          ip_address: null, // Pode ser obtido do request se necessário
+          user_agent: navigator.userAgent || null
+        };
+
+        await supabase.from('contact_entries').insert(entryData);
+      } catch (logError) {
+        console.error('Erro ao logar entrada do contato:', logError);
+        // Não falhar o processo principal se o log falhar
+      }
 
       // Enviar para webhook
       await sendToWebhook(contactData);

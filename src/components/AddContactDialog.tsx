@@ -66,7 +66,14 @@ export const AddContactDialog = () => {
         founder: !!formData.founder,
         leader_id: formData.leader_id || null,
       };
-      await addContact(contactToAdd);
+      await addContact(contactToAdd, {
+        entry_type: 'manual_admin',
+        source_info: {
+          created_via: 'dialog',
+          user_type: 'admin'
+        },
+        user_agent: navigator.userAgent
+      });
       toast({
         title: "Sucesso",
         description: "Contato adicionado com sucesso com status pendente!",
