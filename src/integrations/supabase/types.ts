@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1236,11 +1236,11 @@ export type Database = {
       get_today_birthdays: {
         Args: Record<PropertyKey, never>
         Returns: {
+          age: number
+          birth_date: string
           contact_id: string
           contact_name: string
-          birth_date: string
           whatsapp: string
-          age: number
         }[]
       }
       increment_event_registration: {
@@ -1252,7 +1252,7 @@ export type Database = {
         Returns: undefined
       }
       increment_qr_scan_count: {
-        Args: { qr_id: string; user_ip?: unknown; user_agent_string?: string }
+        Args: { qr_id: string; user_agent_string?: string; user_ip?: unknown }
         Returns: undefined
       }
     }
