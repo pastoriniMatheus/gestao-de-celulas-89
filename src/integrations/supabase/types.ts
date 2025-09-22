@@ -380,6 +380,44 @@ export type Database = {
           },
         ]
       }
+      contact_deletions: {
+        Row: {
+          contact_id: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          ip_address: unknown | null
+          reason: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          contact_id: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          ip_address?: unknown | null
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          contact_id?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          ip_address?: unknown | null
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_deletions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_entries: {
         Row: {
           contact_id: string

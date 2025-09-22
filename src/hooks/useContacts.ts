@@ -187,14 +187,51 @@ export const useContacts = () => {
       
       // Lógica para atualizar status baseado na célula
       if (updates.cell_id !== undefined) {
+        const currentContact = contacts.find(c => c.id === id);
+        
         if (updates.cell_id && updates.cell_id !== null) {
           // Se está atribuindo uma célula, mudar para membro
           updates.status = 'member';
           console.log('useContacts: Atribuindo célula, mudando status para member');
+          
+          // Log cell assignment if it's a new assignment
+          if (currentContact && !currentContact.cell_id) {
+            try {
+              await supabase.from('contact_entries').insert({
+                contact_id: id,
+                entry_type: 'cell_assignment',
+                source_info: {
+                  cell_id: updates.cell_id,
+                  previous_cell_id: currentContact.cell_id,
+                  action: 'assigned_to_cell'
+                },
+                user_agent: navigator.userAgent
+              });
+            } catch (logError) {
+              console.error('Erro ao logar atribuição de célula:', logError);
+            }
+          }
         } else if (updates.cell_id === null) {
           // Se está removendo a célula, voltar para pendente
           updates.status = 'pending';
           console.log('useContacts: Removendo célula, mudando status para pending');
+          
+          // Log cell removal
+          if (currentContact && currentContact.cell_id) {
+            try {
+              await supabase.from('contact_entries').insert({
+                contact_id: id,
+                entry_type: 'cell_removal',
+                source_info: {
+                  previous_cell_id: currentContact.cell_id,
+                  action: 'removed_from_cell'
+                },
+                user_agent: navigator.userAgent
+              });
+            } catch (logError) {
+              console.error('Erro ao logar remoção de célula:', logError);
+            }
+          }
         }
       }
 
@@ -260,6 +297,13 @@ export const useContacts = () => {
 
   const deleteContact = async (id: string) => {
     try {
+      // Get contact info before deleting
+      const contact = contacts.find(c => c.id === id);
+      if (!contact) {
+        throw new Error('Contato não encontrado');
+      }
+
+      // Delete the contact
       const { error } = await supabase
         .from('contacts')
         .delete()
@@ -268,6 +312,19 @@ export const useContacts = () => {
       if (error) {
         console.error('Erro ao deletar contato:', error);
         throw error;
+      }
+
+      // Log the deletion for reporting
+      try {
+        await supabase.from('contact_deletions').insert({
+          contact_id: id,
+          contact_name: contact.name,
+          ip_address: null, // Not available in this context
+          user_agent: navigator.userAgent
+        });
+      } catch (logError) {
+        console.error('Erro ao logar deleção do contato:', logError);
+        // Don't fail the main deletion if logging fails
       }
 
       toast({
