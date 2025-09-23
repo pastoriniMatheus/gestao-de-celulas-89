@@ -383,6 +383,7 @@ export type Database = {
       contact_deletions: {
         Row: {
           contact_id: string
+          contact_name: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -392,6 +393,7 @@ export type Database = {
         }
         Insert: {
           contact_id: string
+          contact_name?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
@@ -401,6 +403,7 @@ export type Database = {
         }
         Update: {
           contact_id?: string
+          contact_name?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
@@ -420,30 +423,42 @@ export type Database = {
       }
       contact_entries: {
         Row: {
-          contact_id: string
-          created_at: string
+          action_type: string
+          contact_id: string | null
+          contact_name_at_deletion: string | null
+          created_at: string | null
           created_by: string | null
-          entry_type: string
+          deleted_at: string | null
+          deleted_by: string | null
+          entry_type: string | null
           id: string
           ip_address: unknown | null
           source_info: Json | null
           user_agent: string | null
         }
         Insert: {
-          contact_id: string
-          created_at?: string
+          action_type?: string
+          contact_id?: string | null
+          contact_name_at_deletion?: string | null
+          created_at?: string | null
           created_by?: string | null
-          entry_type: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          entry_type?: string | null
           id?: string
           ip_address?: unknown | null
           source_info?: Json | null
           user_agent?: string | null
         }
         Update: {
-          contact_id?: string
-          created_at?: string
+          action_type?: string
+          contact_id?: string | null
+          contact_name_at_deletion?: string | null
+          created_at?: string | null
           created_by?: string | null
-          entry_type?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          entry_type?: string | null
           id?: string
           ip_address?: unknown | null
           source_info?: Json | null
@@ -460,6 +475,13 @@ export type Database = {
           {
             foreignKeyName: "contact_entries_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_entries_deleted_by_fkey"
+            columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1339,6 +1361,26 @@ export type Database = {
       }
       increment_qr_scan_count: {
         Args: { qr_id: string; user_agent_string?: string; user_ip?: unknown }
+        Returns: undefined
+      }
+      insert_contact_entry: {
+        Args: {
+          p_contact_id: string
+          p_entry_type: string
+          p_ip_address?: unknown
+          p_source_info?: Json
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
+      log_qr_event_entry: {
+        Args: {
+          p_contact_id: string
+          p_entry_type: string
+          p_ip_address?: unknown
+          p_source_info?: Json
+          p_user_agent?: string
+        }
         Returns: undefined
       }
     }

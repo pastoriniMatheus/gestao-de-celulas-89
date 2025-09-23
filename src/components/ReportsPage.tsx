@@ -54,8 +54,8 @@ export const ReportsPage = () => {
         .from('contact_entries')
         .select(`
           *,
-          contacts:contact_id(name),
-          profiles:created_by(name)
+          contacts!contact_id(name),
+          profiles!created_by(name)
         `)
         .order('created_at', { ascending: false });
 
@@ -130,7 +130,7 @@ export const ReportsPage = () => {
         return {
           id: deletion.id,
           contact_id: deletion.contact_id,
-          contact_name: 'Contato deletado', // Placeholder since we don't have the name
+          contact_name: deletion.contact_name || 'Contato deletado',
           deleted_by: deletion.deleted_by,
           deleted_at: deletion.deleted_at,
           reason: deletion.reason,
