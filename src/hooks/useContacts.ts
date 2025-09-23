@@ -303,6 +303,8 @@ export const useContacts = () => {
         throw new Error('Contato não encontrado');
       }
 
+      console.log('useContacts: Deletando contato:', contact.name);
+
       // Delete the contact
       const { error } = await supabase
         .from('contacts')
@@ -314,6 +316,8 @@ export const useContacts = () => {
         throw error;
       }
 
+      console.log('useContacts: Contato deletado do banco com sucesso');
+
       // Log the deletion for reporting
       try {
         await supabase.from('contact_deletions').insert({
@@ -322,17 +326,15 @@ export const useContacts = () => {
           ip_address: null, // Not available in this context
           user_agent: navigator.userAgent
         });
+        console.log('useContacts: Deleção logada com sucesso');
       } catch (logError) {
         console.error('Erro ao logar deleção do contato:', logError);
         // Don't fail the main deletion if logging fails
       }
 
-      toast({
-        title: "Sucesso",
-        description: "Contato deletado com sucesso!"
-      });
-
       setContacts(prev => prev.filter(contact => contact.id !== id));
+      
+      console.log('useContacts: Estado local atualizado');
     } catch (error) {
       console.error('Erro ao deletar contato:', error);
       throw error;

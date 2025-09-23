@@ -155,6 +155,8 @@ export const useLeaderContacts = () => {
         throw error;
       }
 
+      console.log('useLeaderContacts: Contato deletado do banco com sucesso');
+
       // Log the deletion for reporting
       try {
         await supabase.from('contact_deletions').insert({
@@ -169,13 +171,10 @@ export const useLeaderContacts = () => {
         // Don't fail the main deletion if logging fails
       }
 
-      toast({
-        title: "Sucesso",
-        description: "Contato deletado com sucesso!"
-      });
-
       // Update local state
       setContacts(prev => prev.filter(contact => contact.id !== id));
+      
+      console.log('useLeaderContacts: Estado local atualizado');
     } catch (error) {
       console.error('useLeaderContacts: Erro ao deletar contato:', error);
       throw error;

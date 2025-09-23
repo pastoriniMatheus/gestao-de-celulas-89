@@ -14,7 +14,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogTitle,
   AlertDialogDescription,
@@ -47,8 +46,14 @@ export const ContactsList = () => {
 
     setIsDeleting(true);
     try {
+      console.log('ContactsList: Iniciando exclusão do contato:', contactToDelete);
       await deleteContact(contactToDelete.id);
+      console.log('ContactsList: Contato excluído com sucesso');
       setContactToDelete(null);
+      toast({
+        title: "Sucesso",
+        description: "Contato excluído com sucesso!",
+      });
     } catch (error) {
       console.error('Erro ao deletar contato:', error);
       toast({
@@ -231,39 +236,16 @@ export const ContactsList = () => {
                           </Button>
                           {/* Botão de Deletar - apenas para admin */}
                           {canManageAllContacts && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-red-500 hover:bg-red-100"
-                                  title="Deletar contato"
-                                  aria-label="Deletar contato"
-                                  onClick={() => setContactToDelete({ id: contact.id, name: contact.name })}
-                                >
-                                  <Trash2 />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogTitle>Excluir contato</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o contato <span className="font-bold">{contact.name}</span>?
-                                  Esta ação não poderá ser desfeita.
-                                </AlertDialogDescription>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel onClick={() => setContactToDelete(null)}>
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleDeleteContact}
-                                    disabled={isDeleting}
-                                    className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                                  >
-                                    {isDeleting ? 'Excluindo...' : 'Excluir'}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-500 hover:bg-red-100"
+                              title="Deletar contato"
+                              aria-label="Deletar contato"
+                              onClick={() => setContactToDelete({ id: contact.id, name: contact.name })}
+                            >
+                              <Trash2 />
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -315,6 +297,31 @@ export const ContactsList = () => {
               );
             })}
           </div>
+        )}
+
+        {/* Dialog de confirmação de exclusão */}
+        {contactToDelete && (
+          <AlertDialog open={!!contactToDelete} onOpenChange={() => setContactToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogTitle>Excluir contato</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o contato <span className="font-bold">{contactToDelete.name}</span>?
+                Esta ação não poderá ser desfeita.
+              </AlertDialogDescription>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setContactToDelete(null)}>
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteContact}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                >
+                  {isDeleting ? 'Excluindo...' : 'Excluir'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
 
         {/* Dialog de editar */}
