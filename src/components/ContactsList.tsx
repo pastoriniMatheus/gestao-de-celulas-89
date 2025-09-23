@@ -25,7 +25,7 @@ import {
 import { EditContactDialog } from './EditContactDialog';
 
 export const ContactsList = () => {
-  const { contacts, loading, fetchContacts } = useLeaderContacts();
+  const { contacts, loading, deleteContact, fetchContacts } = useLeaderContacts();
   const { canManageAllContacts, isAdmin } = useLeaderPermissions();
   const { cells } = useCells();
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,19 +47,7 @@ export const ContactsList = () => {
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('contacts')
-        .delete()
-        .eq('id', contactToDelete.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Contato excluído",
-        description: `${contactToDelete.name} foi removido com sucesso.`,
-      });
-
-      await fetchContacts();
+      await deleteContact(contactToDelete.id);
       setContactToDelete(null);
     } catch (error) {
       console.error('Erro ao deletar contato:', error);

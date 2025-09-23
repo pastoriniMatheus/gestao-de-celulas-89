@@ -130,7 +130,7 @@ export const ReportsPage = () => {
         return {
           id: deletion.id,
           contact_id: deletion.contact_id,
-          contact_name: deletion.contact_name,
+          contact_name: 'Contato deletado', // Placeholder since we don't have the name
           deleted_by: deletion.deleted_by,
           deleted_at: deletion.deleted_at,
           reason: deletion.reason,

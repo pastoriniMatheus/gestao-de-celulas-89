@@ -134,10 +134,59 @@ export const useLeaderContacts = () => {
     };
   }, []);
 
+  const deleteContact = async (id: string) => {
+    try {
+      // Get contact info before deleting
+      const contact = contacts.find(c => c.id === id);
+      if (!contact) {
+        throw new Error('Contato não encontrado');
+      }
+
+      console.log('useLeaderContacts: Deletando contato:', contact.name);
+
+      // Delete the contact
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao deletar contato:', error);
+        throw error;
+      }
+
+      // Log the deletion for reporting
+      try {
+        await supabase.from('contact_deletions').insert({
+          contact_id: id,
+          contact_name: contact.name,
+          ip_address: null, // Not available in this context
+          user_agent: navigator.userAgent
+        });
+        console.log('useLeaderContacts: Deleção logada com sucesso');
+      } catch (logError) {
+        console.error('Erro ao logar deleção do contato:', logError);
+        // Don't fail the main deletion if logging fails
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Contato deletado com sucesso!"
+      });
+
+      // Update local state
+      setContacts(prev => prev.filter(contact => contact.id !== id));
+    } catch (error) {
+      console.error('useLeaderContacts: Erro ao deletar contato:', error);
+      throw error;
+    }
+  };
+
   return {
     contacts,
     loading,
     updateContact,
+    deleteContact,
     fetchContacts
   };
 };
